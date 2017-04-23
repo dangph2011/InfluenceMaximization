@@ -399,8 +399,6 @@ bool stronglyConnectedComponent(DGraph &g, std::vector<DGraph> &p_graph_shatter,
 						check = false;
 						break;
 					} else {
-                        //if ()
-
                         if (f_stack_member[it] == true) { //check if it
     						l_node[u].low = std::min(l_node[u].low, l_node[it].discovery_time);
                             f_edge_component.push(std::pair<uint32_t, uint32_t>(u, it));
@@ -557,11 +555,6 @@ bool articulationPoints(DGraph &g, std::set<uint32_t> &p_articulation_vertices) 
     bool check_in = true;
 
 	for (auto &i : f_vertex_list) {
-		//l_graph_shatter_size_start = p_graph_shatter.size();
-		//l_graph_shatter_size_start = p_graph_shatter.size();
-		//m_num_tree_node = g_time;
-		//std::vector<DGraph> l_graph;
-		//GraphComponent l_graph_component;
 		if (l_node[i].color == WHITE) {
 			//m_num_tree_node++;
 			//uint32_t s = i;
@@ -587,7 +580,7 @@ bool articulationPoints(DGraph &g, std::set<uint32_t> &p_articulation_vertices) 
                         //std::cout << "1 Edge: " << u << " " << it << std::endl;
 						check_out = false;
 						break;
-					} else if (it != l_node[u].predecessor && u != l_node[it].predecessor) {
+					} else if (it != l_node[u].predecessor) {
 						l_node[u].low = std::min(l_node[u].low, l_node[it].discovery_time);
 					}
 				}
@@ -605,7 +598,7 @@ bool articulationPoints(DGraph &g, std::set<uint32_t> &p_articulation_vertices) 
                         //std::cout << "2 Edge: " << u << " " << it << std::endl;
 						check_out = false;
 						break;
-					} else if (it != l_node[u].predecessor && u != l_node[it].predecessor) {
+					} else if (it != l_node[u].predecessor) {
 						l_node[u].low = std::min(l_node[u].low, l_node[it].discovery_time);
 					}
 				}
