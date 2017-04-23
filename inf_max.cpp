@@ -535,10 +535,92 @@ bool stronglyConnectedComponent(DGraph &g, std::vector<DGraph> &p_graph_shatter,
     p_scc.printGraph();
     std::cout << "-----DAG end-----\n";
 
-    std::cout << "DFS traveled\n";
+    std::cout << "DFS traveled DAG\n";
     for (auto &it: l_node) {
         std::cout << "\t" << &it - &l_node[0]<< " " << it.discovery_time << " " << it.finish_time  << " " << it.low << std::endl;
     }
+	return true;
+}
+
+bool removeForwardEdge(DGraph &g) {
+	uint32_t g_time = 0;
+    std::set<uint32_t> f_vertex_list = g.getVertexList();
+    std::vector<std::vector<uint32_t> > f_out_edge_list = g.getOutEdgeList();
+	//init vector of Node in graph by size
+	std::vector<Vertex> l_node(f_out_edge_list.size());
+	std::stack<uint32_t> S;
+	//uint32_t m_num_tree_node;
+	bool check_out = true;
+    std::vector<std::pair<uint32_t, uint32_t> > f_forward_edges;
+    std::vector<std::pair<uint32_t, uint32_t> > f_cross_edges;
+
+	for (auto &i : f_vertex_list) {
+		if (l_node[i].color == WHITE) {
+			//m_num_tree_node++;
+			//uint32_t s = i;
+			S.push(i);
+			l_node[i].color = GRAY;
+			l_node[i].discovery_time = ++g_time;
+			l_node[i].low = l_node[i].discovery_time;
+			while (!S.empty()) {
+				uint32_t u = S.top();
+				//S.pop();
+				check_out = true;
+				for (auto &it : f_out_edge_list[u]) {
+					if (l_node[it].color == WHITE) {
+						//l_node[it].discovery_time = ++g_time;
+						S.push(it);
+						l_node[it].color = GRAY;
+						l_node[it].discovery_time = ++g_time;
+						l_node[it].low = l_node[it].discovery_time;
+						l_node[it].predecessor = u;
+						l_node[u].num_child++;
+						//f_edge_component.push(std::pair<uint32_t, uint32_t>(u, it));
+                        //std::cout << "1 Edge: " << u << " " << it << std::endl;
+						check_out = false;
+						break;
+					} else if (l_node[it].color == BLACK && u != l_node[it].predecessor) {
+            			if (l_node[u].discovery_time < l_node[it].discovery_time) {
+            				f_forward_edges.push_back(std::pair<uint32_t, uint32_t>(u, it));
+            			} else {
+                            f_cross_edges.push_back(std::pair<uint32_t, uint32_t>(u, it));
+                        }
+                    }
+				}
+
+				if (check_out) {
+					if (l_node[u].color == GRAY) {
+						l_node[u].color = BLACK;
+						l_node[u].finish_time = ++g_time;
+					}
+					S.pop();
+				}
+			}
+		}
+	}
+
+    //Remove Forward Edges
+    for (auto &it : f_forward_edges) {
+        g.delEdge(it.first, it.second);
+	}
+
+    std::cout << "DFS traveled Forward edge\n";
+    for (auto &it: l_node) {
+        std::cout << "\t" << &it - &l_node[0]<< " " << it.low << " " << it.discovery_time << " " << it.finish_time << " "<< it.predecessor << std::endl;
+    }
+
+    std::cout << "---FORWARD EDGES---\n";
+	for (auto &it : f_forward_edges) {
+		std::cout << "\t" << it.first << " " << it.second;
+        std::cout << "\n";
+	}
+
+    std::cout << "---CROSS EDGES---\n";
+	for (auto &it : f_cross_edges) {
+		std::cout << "\t" << it.first << " " << it.second;
+        std::cout << "\n";
+	}
+
 	return true;
 }
 
@@ -626,7 +708,7 @@ bool articulationPoints(DGraph &g, std::set<uint32_t> &p_articulation_vertices) 
 		}
 	}
 
-    std::cout << "DFS traveled\n";
+    std::cout << "DFS traveled Articulation\n";
     for (auto &it: l_node) {
         std::cout << "\t" << &it - &l_node[0]<< " " << it.low << " " << it.discovery_time << " " << it.finish_time << " "<< it.predecessor << std::endl;
     }
@@ -664,6 +746,7 @@ int main(){
     	std::cout << "----------\n";
     }
 
+    removeForwardEdge(m_sccs);
     articulationPoints(m_sccs, m_articulation_vertices);
 
     std::cout << "Articulation:\n";
