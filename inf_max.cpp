@@ -9,9 +9,11 @@
 #include <string>
 #include <sys/time.h>
 #include <unistd.h>
+#include <random>
 
-const uint16_t k = 200; //The size of seed
-const uint16_t R = 200; //The number of DAG
+const uint16_t k = 50; //The size of seed
+const uint16_t R = 50; //The number of DAG
+const double pro = 0.1;
 
 enum eColor{
     WHITE,
@@ -359,22 +361,28 @@ class DGraph{
                 delEdge(it.first, it.second);
         	}
 
-            std::cout << "DFS traveled Forward edge\n";
-            for (auto &it: l_node) {
-                std::cout << "\t" << &it - &l_node[0]<< " " << it.low << " " << it.discovery_time << " " << it.finish_time << " "<< it.predecessor << std::endl;
-            }
+            // std::cout << "DFS traveled Forward edge\n";
+            // for (auto &it: l_node) {
+            //     std::cout << "\t" << &it - &l_node[0]<< " " << it.low << " " << it.discovery_time << " " << it.finish_time << " "<< it.predecessor << std::endl;
+            // }
+            //
+            // std::cout << "---FORWARD EDGES---\n";
+        	// for (auto &it : f_forward_edges) {
+        	// 	std::cout << "\t" << it.first << " " << it.second;
+            //     std::cout << "\n";
+        	// }
+            //
+            // std::cout << "---CROSS EDGES---\n";
+        	// for (auto &it : f_cross_edges) {
+        	// 	std::cout << "\t" << it.first << " " << it.second;
+            //     std::cout << "\n";
+        	// }
 
             std::cout << "---FORWARD EDGES---\n";
-        	for (auto &it : f_forward_edges) {
-        		std::cout << "\t" << it.first << " " << it.second;
-                std::cout << "\n";
-        	}
+        	std::cout << "\t" << f_forward_edges.size() << std::endl;
 
             std::cout << "---CROSS EDGES---\n";
-        	for (auto &it : f_cross_edges) {
-        		std::cout << "\t" << it.first << " " << it.second;
-                std::cout << "\n";
-        	}
+            std::cout << "\t" << f_cross_edges.size() << std::endl;
 
         	return true;
         }
@@ -470,15 +478,16 @@ class DGraph{
         		}
         	}
 
-            std::cout << "DFS traveled Articulation\n";
-            for (auto &it: l_node) {
-                std::cout << "\t" << &it - &l_node[0]<< " " << it.low << " " << it.discovery_time << " " << it.finish_time << " "<< it.predecessor << std::endl;
-            }
+            // std::cout << "DFS traveled Articulation\n";
+            // for (auto &it: l_node) {
+            //     std::cout << "\t" << &it - &l_node[0]<< " " << it.low << " " << it.discovery_time << " " << it.finish_time << " "<< it.predecessor << std::endl;
+            // }
         	return true;
         }
 
         //DFS travel
         bool stronglyConnectedComponent(std::vector<DGraph> &p_graph_shatter, DGraph &p_scc) {
+            n_sccs_ = 0;
         	uint32_t g_time = 0;
             vetex_component_mapping_.assign(out_edge_list_.size(), -1);
             //std::set<uint32_t> f_vertex_list = g.getVertexList();
@@ -488,6 +497,7 @@ class DGraph{
         	std::vector<Vertex> l_node(out_edge_list_.size());
         	std::stack<std::pair<uint32_t, uint32_t> > f_edge_component;
         	std::stack<uint32_t> f_node_component;
+
         	uint32_t l_graph_shatter_size_begin = p_graph_shatter.size();
         	uint32_t l_graph_shatter_size = p_graph_shatter.size();
 
@@ -566,7 +576,7 @@ class DGraph{
                                         while (l_pop_node != u) {
                                             l_g.addVertex(l_pop_node);
                                             l_g.setReach(l_pop_node, getReach(l_pop_node));
-                                            vetex_component_mapping_[l_pop_node] = l_graph_shatter_size;
+                                            vetex_component_mapping_[l_pop_node] = n_sccs_;
                                             f_stack_member[l_pop_node] = false;
                                             f_node_component.pop();
                                             l_pop_node = f_node_component.top();
@@ -575,13 +585,14 @@ class DGraph{
                                         l_g.addVertex(l_pop_node);
                                         l_g.setReach(l_pop_node, getReach(l_pop_node));
                                         f_stack_member[l_pop_node] = false;
-                                        vetex_component_mapping_[l_pop_node] = l_graph_shatter_size;
+                                        vetex_component_mapping_[l_pop_node] = n_sccs_;
                                         f_node_component.pop();
                                         //sort and remove duplicate edges
                                         l_g.sortAndRemoveDuplicateEdges();
                                         p_graph_shatter.push_back(l_g);
                                         //Increase version
                                         l_graph_shatter_size++;
+                                        n_sccs_++;
                                     }
                                 }
         					}
@@ -603,13 +614,14 @@ class DGraph{
             				l_g.addVertex(l_pop_node);
             				l_g.setReach(l_pop_node, getReach(l_pop_node));
                             f_stack_member[l_pop_node] = false;
-                            vetex_component_mapping_[l_pop_node] = l_graph_shatter_size;
+                            vetex_component_mapping_[l_pop_node] = n_sccs_;
             				f_node_component.pop();
             			}
 
             			l_g.sortAndRemoveDuplicateEdges();
             			p_graph_shatter.push_back(l_g);
             			l_graph_shatter_size++;
+                        n_sccs_++;
             		}
                 }
         	}
@@ -628,15 +640,15 @@ class DGraph{
             p_scc.sortAndRemoveDuplicateEdges();
 
             //set number of strongly connected component
-            n_sccs_ = l_graph_shatter_size - l_graph_shatter_size_begin;
-            std::cout << "-----DAG start-----\n";
-            p_scc.printGraph();
-            std::cout << "-----DAG end-----\n";
-
-            std::cout << "DFS traveled DAG\n";
-            for (auto &it: l_node) {
-                std::cout << "\t" << &it - &l_node[0]<< " " << it.discovery_time << " " << it.finish_time  << " " << it.low << std::endl;
-            }
+            //n_sccs_ = l_graph_shatter_size - l_graph_shatter_size_begin;
+            // std::cout << "-----DAG start-----\n";
+            // p_scc.printGraph();
+            // std::cout << "-----DAG end-----\n";
+            //
+            // std::cout << "DFS traveled DAG\n";
+            // for (auto &it: l_node) {
+            //     std::cout << "\t" << &it - &l_node[0]<< " " << it.discovery_time << " " << it.finish_time  << " " << it.low << std::endl;
+            // }
         	return true;
         }
 
@@ -704,10 +716,12 @@ class DGraph{
                 auto v0 = Q.top();
                 flag = true;
                 for (auto &it: out_edge_list_[v0]) {
+                    //std::cout << "Test ";
+                    //std::cout << it << " " << removed_vertex_.size() << std::endl;
                     if (removed_vertex_[it]) {
 						continue;
 					}
-
+                    //std::cout << "Test \n";
                     if (!checked[it]) {
                         checked[it] = true;
                         if (articulation_points_[it]) {
@@ -731,7 +745,7 @@ class DGraph{
         void removedVertex(uint32_t v) {
             //map v to scc contain v
             v = vetex_component_mapping_[v];
-            std::cout << "Component=" << v << std::endl;
+            //std::cout << "Component=" << v << std::endl;
             //remove tree from root v
             //Using DFS to traveled vertex from root v
             std::vector<uint32_t> l_remove_vertex;
@@ -755,11 +769,11 @@ class DGraph{
                 }
             }
 
-            std::cout << "Remove:" << std::endl;
-            for (auto &it : l_remove_vertex)
-            {
-                std::cout << "\t" << it << std::endl;
-            }
+            // std::cout << "Remove:" << std::endl;
+            // for (auto &it : l_remove_vertex)
+            // {
+            //     std::cout << "\t" << it << std::endl;
+            // }
 
             std::vector<bool> checked(removed_vertex_.size(), false);
             //Reverse DFS to set vertex that reduces gain bases on v
@@ -787,11 +801,11 @@ class DGraph{
                 }
             }
 
-            std::cout << "Change=" << change_.size() << std::endl;
-            for (auto &it : change_)
-            {
-                std::cout << "\t" << it << std::endl;
-            }
+            // std::cout << "Change=" << change_.size() << std::endl;
+            // for (auto &it : change_)
+            // {
+            //     std::cout << "\t" << it << std::endl;
+            // }
         }
 };
 
@@ -816,7 +830,7 @@ bool readEdgeListPro(std::vector<std::pair<std::pair<uint32_t, uint32_t>, double
 	return true;
 }
 
-bool readEdgeList(DGraph &g, std::string p_file_name){
+bool readEdgeList(std::string p_file_name, std::vector<std::pair<uint32_t, uint32_t> > &edge_list, uint32_t &p_max_vertex){
 	std::ifstream f_in;
 	f_in.open(p_file_name);
 	if (f_in.fail()) {
@@ -824,24 +838,31 @@ bool readEdgeList(DGraph &g, std::string p_file_name){
 		return false;
 	}
 	uint32_t u, v;
-
-	std::vector<std::pair<uint32_t, uint32_t> > edge_list;
+    p_max_vertex = 0;
+	//std::vector<std::pair<uint32_t, uint32_t> > edge_list;
 
 	while (f_in >> u >> v){
 		edge_list.push_back(std::pair<unsigned, unsigned>(u,v));
+        if (p_max_vertex <= u) {
+            p_max_vertex = u + 1;
+        }
+
+        if (p_max_vertex <= v) {
+            p_max_vertex = v + 1;
+        }
 	}
 
 	//Store in adjacency list
-	for (auto &it : edge_list) {
-        g.addVertex(it.first);
-        g.addVertex(it.second);
-
-        g.addEdge(it.first, it.second);
-	}
-
-	//g.initAndSetReach();
-	// //sort adjacency list
-	g.sortAndRemoveDuplicateEdges();
+	// for (auto &it : edge_list) {
+    //     g.addVertex(it.first);
+    //     g.addVertex(it.second);
+    //
+    //     g.addEdge(it.first, it.second);
+	// }
+    //
+	// //g.initAndSetReach();
+	// // //sort adjacency list
+	// g.sortAndRemoveDuplicateEdges();
 	return true;
 }
 
@@ -900,72 +921,66 @@ int main(){
     // }
     //
     // std::vector<DGraph>
+    //DGraph g;
 
-    DGraph g;
+    std::vector<std::pair<uint32_t, uint32_t> > m_edge_list;
+    uint32_t n = 0;
 
 	//Read edge list format
-    if (!readEdgeList(g,"data/test5.txt")) {
+    if (!readEdgeList("data/wiki-Vote.txt", m_edge_list, n)) {
        return 0;
     }
-    uint32_t n = g.getOutEdgeList().size();
 
-    g.printGraph();
-
+    //store scc info
     std::vector<DGraph> m_graph_shatter;
     double start_time_bridge = getCurrentTimeMlsec();
-
-    DGraph m_sccs;
-    g.stronglyConnectedComponent(m_graph_shatter, m_sccs);
-    m_sccs.init(n, g.getNumberOfSccs(), g.getComponent());
-
-    //print bridge
-    // std::cout << "SIZE SHATTER=" << m_graph_shatter.size() << "\n";
-    //
-    // for (auto &it : m_graph_shatter) {
-    // 	//std::cout << &it - &m_graph_shatter[0] << "\n";
-    // 	std::cout << "DGraph ID=" << it.getGraphId() <<"\n";
-    // 	it.printGraph();
-    // 	it.printBridgeInfo();
-    // 	std::cout << "Total reach=" << it.getTotalReach() << std::endl;
-    // 	std::cout << "----------\n";
-    // }
-
-    m_sccs.removeForwardEdge();
-    m_sccs.getArticulationPoints();
+    //http://en.cppreference.com/w/cpp/numeric/random/uniform_real_distribution
+    std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+    std::uniform_real_distribution<> dis(0, 1);
 
     std::vector<uint64_t> m_gain(n, 0);
     std::vector<uint32_t> m_seeds;
+    std::vector<DGraph> m_sccs(R);
+    std::vector<DGraph> g(R);
+    for (auto i = 0; i < R; i++) {
+        //http://en.cppreference.com/w/cpp/numeric/random/uniform_real_distribution
+        for (auto &it : m_edge_list) {
+            //Use dis to transform the random unsigned int generated by gen into a double in [0, 1)
+            if (dis(gen) < pro) {
+                g[i].addEdge(it.first, it.second);
+            }
+        }
 
-    //for the first seed
-    m_sccs.initGain(m_gain);
+        g[i].stronglyConnectedComponent(m_graph_shatter, m_sccs[i]);
+        //mapping between original vertex and scc (DAG)
+        m_sccs[i].init(n, g[i].getNumberOfSccs(), g[i].getComponent());
+        m_sccs[i].removeForwardEdge();
+        m_sccs[i].getArticulationPoints();
+
+        m_sccs[i].initGain(m_gain);
+    }
+
     auto next = 0;
-	for (auto i = 0; i < n; i++) {
-		if (m_gain[i] > m_gain[next]) {
-			next = i;
-		}
-	}
+    //first seeds
+    for (auto i = 0; i < n; i++) {
+        if (m_gain[i] > m_gain[next]) {
+            next = i;
+        }
+    }
     m_seeds.push_back(next);
 
-    // std::cout << "Gains:" << std::endl;
-    // for (auto &it : m_gain)
-    // {
-    //     std::cout << "\t" << it << std::endl;
-    // }
-
     for (auto i = 1; i < k; i++) {
-        m_sccs.removedVertex(next);
-        m_sccs.updateGain(m_gain);
-        // std::cout << "Gains:" << std::endl;
-        // for (auto &it : m_gain)
-        // {
-        //     std::cout << "\t" << it << std::endl;
-        // }
+        for (auto i = 0; i < R; i++) {
+            m_sccs[i].removedVertex(next);
+            m_sccs[i].updateGain(m_gain);
+        }
         next = 0;
         for (auto i = 0; i < n; i++) {
-    		if (m_gain[i] > m_gain[next]) {
-    			next = i;
-    		}
-    	}
+            if (m_gain[i] > m_gain[next]) {
+                next = i;
+            }
+        }
         m_seeds.push_back(next);
     }
 
@@ -975,8 +990,8 @@ int main(){
     {
         std::cout << "\t" << it << std::endl;
     }
+
     std::cout << std::fixed << std::setprecision(6);
     std::cout << "Time run=" << getCurrentTimeMlsec() - start_time_bridge << "\n";
-
     return 0;
 }
