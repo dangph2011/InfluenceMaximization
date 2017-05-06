@@ -120,16 +120,16 @@ class DGraph{
 
         void setNumberOfVertex(uint32_t p_vnum){
             v_num_ = p_vnum;
-            if (out_edge_list_.size() <= v_num_) {
-                out_edge_list_.resize(v_num_ + 1);
-            }
-
-            if (in_edge_list_.size() <= v_num_) {
-                in_edge_list_.resize(v_num_ + 1);
-            }
+            resizeOutEdgeList(v_num_);
+            resizeInEdgeList(v_num_);
+            resizeReach(v_num_);
         }
 
         uint32_t getNumberOfVertex() {
+            return v_num_;
+        }
+
+        uint32_t getRealNumberOfVertex() {
             return vertex_list_.size();
         }
 
@@ -188,11 +188,11 @@ class DGraph{
         }
 
 		void addVertex(uint32_t u) {
-			if (out_edge_list_.size() < (u + 1)) {
+			if (out_edge_list_.size() <= u) {
 				out_edge_list_.resize(u + 1);
 			}
 
-			if (reach_.size() < (u + 1)){
+			if (reach_.size() <= u){
 				reach_.resize(u+1, 1);
 			}
 
@@ -200,22 +200,22 @@ class DGraph{
 		}
 
 		void addEdge(uint32_t u, uint32_t v) {
-			if (out_edge_list_.size() < (u + 1)) {
+			if (out_edge_list_.size() <= u) {
 				out_edge_list_.resize(u + 1);
 				reach_.resize(u + 1, 1);
 			}
-			if (out_edge_list_.size() < (v + 1)) {
+			if (out_edge_list_.size() <= v) {
 				out_edge_list_.resize(v + 1);
 				reach_.resize(v + 1, 1);
 			}
 
 			out_edge_list_[u].push_back(v);
 
-            if (in_edge_list_.size() < (u + 1)) {
+            if (in_edge_list_.size() <= u) {
                 in_edge_list_.resize(u + 1);
                 reach_.resize(u + 1, 1);
             }
-            if (in_edge_list_.size() < (v + 1)) {
+            if (in_edge_list_.size() <= v) {
                 in_edge_list_.resize(v + 1);
                 reach_.resize(v + 1, 1);
             }
@@ -269,7 +269,7 @@ class DGraph{
     	void printBridgeInfo(){
             //TODO
             for (auto &it: graph_connected_) {
-        		std::cout << "GraphID=" << it.graph_id << " Start=" << it.u_start << " End=" << it.v_end << std::endl;
+        		std::cerr << "GraphID=" << it.graph_id << " Start=" << it.u_start << " End=" << it.v_end << std::endl;
             }
     	}
 
@@ -283,17 +283,17 @@ class DGraph{
     	//print graph
         void printEdges() {
     		//
-    		std::cout << "Out List Edges\n";
+    		std::cerr << "Out List Edges\n";
         	for (auto &it : out_edge_list_){
         		for (auto &it1 : it) {
-        			std::cout << &it - &out_edge_list_[0] << " " << it1 << std::endl;
+        			std::cerr << &it - &out_edge_list_[0] << " " << it1 << std::endl;
         		}
         	}
 
-            std::cout << "In List Edges\n";
+            std::cerr << "In List Edges\n";
         	for (auto &it : in_edge_list_){
         		for (auto &it1 : it) {
-        			std::cout << &it - &in_edge_list_[0] << " " << it1 << std::endl;
+        			std::cerr << &it - &in_edge_list_[0] << " " << it1 << std::endl;
         		}
         	}
         }
@@ -301,16 +301,16 @@ class DGraph{
     	//print graph
         void printVertices() {
     		//
-    		std::cout << "List Vertices\n";
+    		std::cerr << "List Vertices\n";
         	for (auto &it : vertex_list_){
-        		std::cout << it << " " << reach_[it] << std::endl;
+        		std::cerr << it << " " << reach_[it] << std::endl;
         	}
         }
 
         bool removeForwardEdge() {
         	uint32_t g_time = 0;
             //std::set<uint32_t> f_vertex_list_cp = g.getVertexList();
-            std::vector<uint32_t> f_vertex_list(vertex_list_.begin(), vertex_list_.end());
+            //std::vector<uint32_t> f_vertex_list(vertex_list_.begin(), vertex_list_.end());
             //std::vector<std::vector<uint32_t> > f_out_edge_list = g.getOutEdgeList();
         	//init vector of Node in graph by size
         	std::vector<Vertex> l_node(out_edge_list_.size());
@@ -319,8 +319,7 @@ class DGraph{
         	bool check_out = true;
             std::vector<std::pair<uint32_t, uint32_t> > f_forward_edges;
             std::vector<std::pair<uint32_t, uint32_t> > f_cross_edges;
-            for (int t = 0 ; t < f_vertex_list.size() ; t++) {
-                auto i = f_vertex_list[t];
+            for (int i = 0 ; i < v_num_ ; i++) {
         	//for (auto &i : f_vertex_list) {
         		if (l_node[i].color == WHITE) {
         			//m_num_tree_node++;
@@ -343,7 +342,7 @@ class DGraph{
         						l_node[it].predecessor = u;
         						l_node[u].num_child++;
         						//f_edge_component.push(std::pair<uint32_t, uint32_t>(u, it));
-                                //std::cout << "1 Edge: " << u << " " << it << std::endl;
+                                //std::cerr << "1 Edge: " << u << " " << it << std::endl;
         						check_out = false;
         						break;
         					} else if (l_node[it].color == BLACK && u != l_node[it].predecessor) {
@@ -371,28 +370,28 @@ class DGraph{
                 delEdge(it.first, it.second);
         	}
 
-            // std::cout << "DFS traveled Forward edge\n";
+            // std::cerr << "DFS traveled Forward edge\n";
             // for (auto &it: l_node) {
-            //     std::cout << "\t" << &it - &l_node[0]<< " " << it.low << " " << it.discovery_time << " " << it.finish_time << " "<< it.predecessor << std::endl;
+            //     std::cerr << "\t" << &it - &l_node[0]<< " " << it.low << " " << it.discovery_time << " " << it.finish_time << " "<< it.predecessor << std::endl;
             // }
             //
-            // std::cout << "---FORWARD EDGES---\n";
+            // std::cerr << "---FORWARD EDGES---\n";
         	// for (auto &it : f_forward_edges) {
-        	// 	std::cout << "\t" << it.first << " " << it.second;
-            //     std::cout << "\n";
+        	// 	std::cerr << "\t" << it.first << " " << it.second;
+            //     std::cerr << "\n";
         	// }
             //
-            // std::cout << "---CROSS EDGES---\n";
+            // std::cerr << "---CROSS EDGES---\n";
         	// for (auto &it : f_cross_edges) {
-        	// 	std::cout << "\t" << it.first << " " << it.second;
-            //     std::cout << "\n";
+        	// 	std::cerr << "\t" << it.first << " " << it.second;
+            //     std::cerr << "\n";
         	// }
 
-            std::cout << "---FORWARD EDGES---\n";
-        	std::cout << "\t" << f_forward_edges.size() << std::endl;
+            std::cerr << "---FORWARD EDGES---\n";
+        	std::cerr << "\t" << f_forward_edges.size() << std::endl;
 
-            std::cout << "---CROSS EDGES---\n";
-            std::cout << "\t" << f_cross_edges.size() << std::endl;
+            std::cerr << "---CROSS EDGES---\n";
+            std::cerr << "\t" << f_cross_edges.size() << std::endl;
 
         	return true;
         }
@@ -411,7 +410,7 @@ class DGraph{
         	bool check_out = true;
             bool check_in = true;
 
-        	for (auto &i : vertex_list_) {
+        	for (int i = 0 ; i < v_num_ ; i++) {
         		if (l_node[i].color == WHITE) {
         			//m_num_tree_node++;
         			//uint32_t s = i;
@@ -436,7 +435,7 @@ class DGraph{
         						l_node[it].predecessor = u;
         						l_node[u].num_child++;
         						//f_edge_component.push(std::pair<uint32_t, uint32_t>(u, it));
-                                //std::cout << "1 Edge: " << u << " " << it << std::endl;
+                                //std::cerr << "1 Edge: " << u << " " << it << std::endl;
         						check_out = false;
         						break;
         					} else if (it != l_node[u].predecessor) {
@@ -456,7 +455,7 @@ class DGraph{
             						l_node[it].predecessor = u;
             						l_node[u].num_child++;
             						//f_edge_component.push(std::pair<uint32_t, uint32_t>(u, it));
-                                    //std::cout << "2 Edge: " << u << " " << it << std::endl;
+                                    //std::cerr << "2 Edge: " << u << " " << it << std::endl;
             						check_in = false;
             						break;
             					} else if (it != l_node[u].predecessor) {
@@ -494,9 +493,9 @@ class DGraph{
                     n_ar++;
                 }
             }
-            std::cout << "Number of Articulation = " << n_ar << std::endl;
+            std::cerr << "Number of Articulation = " << n_ar << std::endl;
             // for (auto &it: l_node) {
-            //     std::cout << "\t" << &it - &l_node[0]<< " " << it.low << " " << it.discovery_time << " " << it.finish_time << " "<< it.predecessor << std::endl;
+            //     std::cerr << "\t" << &it - &l_node[0]<< " " << it.low << " " << it.discovery_time << " " << it.finish_time << " "<< it.predecessor << std::endl;
             // }
         	return true;
         }
@@ -552,7 +551,7 @@ class DGraph{
         						l_node[it].predecessor = u;
         						l_node[u].num_child++;
         						//f_edge_component.push(std::pair<uint32_t, uint32_t>(u, it));
-                                //std::cout << "1 Edge: " << u << " " << it << std::endl;
+                                //std::cerr << "1 Edge: " << u << " " << it << std::endl;
         						check = false;
         						break;
         					} else {
@@ -629,7 +628,7 @@ class DGraph{
             			while (!f_node_component.empty()) {
             				auto l_pop_node = f_node_component.top();
             				//l_g.addVertex(l_pop_node);
-                            //std::cout << "L_pop" << l_pop_node << " " << v_num_ << std::endl;
+                            //std::cerr << "L_pop" << l_pop_node << " " << v_num_ << std::endl;
             				//l_g.setReach(l_pop_node, getReach(l_pop_node));
                             f_stack_member[l_pop_node] = false;
                             vetex_component_mapping_[l_pop_node] = n_sccs_;
@@ -644,12 +643,13 @@ class DGraph{
                 }
         	}
 
+            p_scc.setNumberOfVertex(n_sccs_);
             for (auto i = 0; i < out_edge_list_.size(); i++) {
                 for (auto &it: out_edge_list_[i]) {
                     if (vetex_component_mapping_[i] != vetex_component_mapping_[it]) {
                         //p_graph_shatter[vetex_component_mapping_[i]].setGraphConnected(vetex_component_mapping_[it], i, it);
-                        p_scc.addVertex(vetex_component_mapping_[i]);
-                        p_scc.addVertex(vetex_component_mapping_[it]);
+                        //p_scc.addVertex(vetex_component_mapping_[i]);
+                        //p_scc.addVertex(vetex_component_mapping_[it]);
                         p_scc.addEdge(vetex_component_mapping_[i], vetex_component_mapping_[it]);
                     }
                 }
@@ -659,18 +659,20 @@ class DGraph{
 
             //set number of strongly connected component
             //n_sccs_ = l_graph_shatter_size - l_graph_shatter_size_begin;
-            // std::cout << "-----DAG start-----\n";
+            // std::cerr << "-----DAG start-----\n";
             // p_scc.printGraph();
-            // std::cout << "-----DAG end-----\n";
+            // std::cerr << "-----DAG end-----\n";
             //
-            // std::cout << "DFS traveled DAG\n";
+            // std::cerr << "DFS traveled DAG\n";
             // for (auto &it: l_node) {
-            //     std::cout << "\t" << &it - &l_node[0]<< " " << it.discovery_time << " " << it.finish_time  << " " << it.low << std::endl;
+            //     std::cerr << "\t" << &it - &l_node[0]<< " " << it.discovery_time << " " << it.finish_time  << " " << it.low << std::endl;
             // }
         	return true;
         }
 
         void init(uint32_t p_n, uint32_t p_nscc, std::vector<int32_t> p_component ){
+            //TODO: term position
+            articulation_points_.assign(out_edge_list_.size(), false);
             computed_vertex_.assign(p_n, false);
             removed_vertex_.assign(p_n, false);
             sigma_.assign(p_n, 0);
@@ -683,7 +685,7 @@ class DGraph{
                 component_vertex_[vetex_component_mapping_[i]].push_back(i);
             }
             // for (auto &it : weight_) {
-            //     std::cout << "\t" << it << std::endl;
+            //     std::cerr << "\t" << it << std::endl;
             // }
 
             //set change
@@ -693,6 +695,7 @@ class DGraph{
         }
 
         void initGain(std::vector<uint64_t> &gain) {
+            //std::cerr << "Start gain\n";
             for (auto i = 0; i < change_.size(); i++) {
                auto v = change_[i];
                gain[v] += computeSigmaVertex(v);
@@ -733,18 +736,14 @@ class DGraph{
             while (!Q.empty()) {
                 auto v0 = Q.top();
                 flag = true;
-                std::cout << "OUT EDGE LIST= "<< out_edge_list_.size() << std::endl;
-                std::cout << "V0= "<< v0 << std::endl;
-                std::cout << "Size v0= "<< out_edge_list_[v0].size() << std::endl;
                 for (auto it : out_edge_list_[v0]) {
-                    //std::cout << "Test ";
-
-                    std::cout << removed_vertex_.size() << std::endl;
-                    std::cout << it << " " << removed_vertex_.size() << std::endl;
+                    //std::cerr << "Test ";
+                    //std::cerr << removed_vertex_.size() << std::endl;
+                    //std::cerr << it << " " << removed_vertex_.size() << std::endl;
                     if (removed_vertex_[it]) {
 						continue;
 					}
-                    //std::cout << "Test \n";
+                    //std::cerr << "Test \n";
                     if (!checked[it]) {
                         checked[it] = true;
                         if (articulation_points_[it]) {
@@ -768,7 +767,7 @@ class DGraph{
         void removedVertex(uint32_t v) {
             //map v to scc contain v
             v = vetex_component_mapping_[v];
-            //std::cout << "Component=" << v << std::endl;
+            //std::cerr << "Component=" << v << std::endl;
             //remove tree from root v
             //Using DFS to traveled vertex from root v
             std::vector<uint32_t> l_remove_vertex;
@@ -792,10 +791,10 @@ class DGraph{
                 }
             }
 
-            // std::cout << "Remove:" << std::endl;
+            // std::cerr << "Remove:" << std::endl;
             // for (auto &it : l_remove_vertex)
             // {
-            //     std::cout << "\t" << it << std::endl;
+            //     std::cerr << "\t" << it << std::endl;
             // }
 
             std::vector<bool> checked(removed_vertex_.size(), false);
@@ -824,10 +823,10 @@ class DGraph{
                 }
             }
 
-            // std::cout << "Change=" << change_.size() << std::endl;
+            // std::cerr << "Change=" << change_.size() << std::endl;
             // for (auto &it : change_)
             // {
-            //     std::cout << "\t" << it << std::endl;
+            //     std::cerr << "\t" << it << std::endl;
             // }
         }
 };
@@ -904,13 +903,13 @@ bool readMetis(DGraph &g, std::string p_file_name) {
 	getline(f_in, line);
 	std::istringstream iss1(line);
 	iss1 >> f_vnum >> f_enum;
-    g.setNumberOfVertex(f_vnum);
+    g.setNumberOfVertex(f_vnum + 1);
     g.setNumberOfEdge(f_enum);
-	//std::cout << "Vertex=" << v_num_ << " Edge=" << e_num_ << std::endl;
-    g.resizeOutEdgeList(f_vnum);
-    g.resizeInEdgeList(f_vnum);
-    g.resizeReach(f_vnum);
-	//std::cout << "Vertex=" << v_num_ << " Edge=" << e_num_ << std::endl;
+	//std::cerr << "Vertex=" << v_num_ << " Edge=" << e_num_ << std::endl;
+    //g.resizeOutEdgeList(f_vnum + 1);
+    //g.resizeInEdgeList(f_vnum + 1);
+    //g.resizeReach(f_vnum);
+	//std::cerr << "Vertex=" << v_num_ << " Edge=" << e_num_ << std::endl;
 	while (getline(f_in, line)) {
 		std::istringstream iss(line);
 		if (!line.empty()) {
@@ -923,7 +922,7 @@ bool readMetis(DGraph &g, std::string p_file_name) {
 		}
 
 		count++;
-		//std::cout << count << "\n";
+		//std::cerr << count << "\n";
 	}
 
 	//g.initAndSetReach();
@@ -946,13 +945,14 @@ int main(int argc, char **argv) {
     // std::vector<DGraph>
     //DGraph g;
 
-    if (argc < 3) {
-		std::cerr << "./inf_max k R" << std::endl;
+    if (argc < 4) {
+		std::cerr << "./inf_max graph k R" << std::endl;
 		exit(1);
 	}
 
-    k = atoi(argv[1]);
-	R = atoi(argv[2]);
+    std::string file = argv[1];
+    k = atoi(argv[2]);
+	R = atoi(argv[3]);
 
     std::cerr << k << " " << R << std::endl;
 
@@ -960,7 +960,7 @@ int main(int argc, char **argv) {
     uint32_t n = 0;
 
 	//Read edge list format
-    if (!readEdgeList("data/wiki-Vote.txt", m_edge_list, n)) {
+    if (!readEdgeList(file, m_edge_list, n)) {
        return 0;
     }
 
@@ -979,8 +979,6 @@ int main(int argc, char **argv) {
     std::vector<DGraph> g(R);
     for (auto i = 0; i < R; i++) {
         //http://en.cppreference.com/w/cpp/numeric/random/uniform_real_distribution
-        g[i].resizeOutEdgeList(n);
-        g[i].resizeInEdgeList(n);
         g[i].setNumberOfVertex(n);
         for (auto &it : m_edge_list) {
             //Use dis to transform the random unsigned int generated by gen into a double in [0, 1)
@@ -988,7 +986,6 @@ int main(int argc, char **argv) {
                 g[i].addEdge(it.first, it.second);
             }
         }
-
         double start_time_scc = getCurrentTimeMlsec();
         g[i].stronglyConnectedComponent(m_sccs[i]);
         scc_time += getCurrentTimeMlsec() - start_time_scc;
@@ -996,7 +993,7 @@ int main(int argc, char **argv) {
         m_sccs[i].init(n, g[i].getNumberOfSccs(), g[i].getComponent());
         m_sccs[i].removeForwardEdge();
         m_sccs[i].getArticulationPoints();
-
+        //sleep(5);
         m_sccs[i].initGain(m_gain);
     }
 
@@ -1024,14 +1021,14 @@ int main(int argc, char **argv) {
     }
 
     //Seed array
-    std::cout << "Seeds:" << std::endl;
+    std::cerr << "Seeds:" << std::endl;
     for (auto &it : m_seeds)
     {
-        std::cout << "\t" << it << std::endl;
+        std::cerr << "\t" << it << std::endl;
     }
 
-    std::cout << std::fixed << std::setprecision(6);
-    std::cout << "Time run=" << getCurrentTimeMlsec() - start_time << "\n";
-    std::cout << "Strongly Connected Time=" << scc_time << "\n";
+    std::cerr << std::fixed << std::setprecision(6);
+    std::cerr << "Time run=" << getCurrentTimeMlsec() - start_time << "\n";
+    std::cerr << "Strongly Connected Time=" << scc_time << "\n";
     return 0;
 }
