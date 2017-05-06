@@ -10,10 +10,11 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <random>
+#include <algorithm>
 
-const uint16_t k = 200; //The size of seed
-const uint16_t R = 10; //The number of DAG
-const double pro = 0.1; //The propagation rate
+uint16_t k = 200; //The size of seed
+uint16_t R = 10; //The number of DAG
+double pro = 0.01; //The propagation rate
 
 enum eColor{
     WHITE,
@@ -119,6 +120,13 @@ class DGraph{
 
         void setNumberOfVertex(uint32_t p_vnum){
             v_num_ = p_vnum;
+            if (out_edge_list_.size() <= v_num_) {
+                out_edge_list_.resize(v_num_ + 1);
+            }
+
+            if (in_edge_list_.size() <= v_num_) {
+                in_edge_list_.resize(v_num_ + 1);
+            }
         }
 
         uint32_t getNumberOfVertex() {
@@ -721,9 +729,12 @@ class DGraph{
             while (!Q.empty()) {
                 auto v0 = Q.top();
                 flag = true;
+                std::cout << "OUT EDGE LIST= "<< out_edge_list_.size() << std::endl;
                 for (auto &it: out_edge_list_[v0]) {
                     //std::cout << "Test ";
-                    //std::cout << it << " " << removed_vertex_.size() << std::endl;
+
+                    std::cout << removed_vertex_.size() << std::endl;
+                    std::cout << it << " " << removed_vertex_.size() << std::endl;
                     if (removed_vertex_[it]) {
 						continue;
 					}
@@ -799,7 +810,7 @@ class DGraph{
                     }
                     if (flag) {
                         computed_vertex_[v0] = false;
-                        for (auto &v_origin : component_vertex_[v0]) {
+                        for (auto v_origin : component_vertex_[v0]) {
                             change_.push_back(v_origin);
                         }
                         Q.pop();
@@ -916,7 +927,7 @@ bool readMetis(DGraph &g, std::string p_file_name) {
 	return true;
 }
 
-int main(){
+int main(int argc, char **argv) {
     std::ios_base::sync_with_stdio(false);
     std::cin.tie(NULL);
 
@@ -929,6 +940,16 @@ int main(){
     // std::vector<DGraph>
     //DGraph g;
 
+    if (argc < 3) {
+		std::cerr << "./inf_max k R" << std::endl;
+		exit(1);
+	}
+
+    k = atoi(argv[1]);
+	R = atoi(argv[2]);
+
+    std::cerr << k << " " << R << std::endl;
+
     std::vector<std::pair<uint32_t, uint32_t> > m_edge_list;
     uint32_t n = 0;
 
@@ -939,7 +960,8 @@ int main(){
 
     //store scc info
     std::vector<DGraph> m_graph_shatter;
-    double start_time_bridge = getCurrentTimeMlsec();
+    double start_time = getCurrentTimeMlsec();
+    double scc_time = 0;
     //http://en.cppreference.com/w/cpp/numeric/random/uniform_real_distribution
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
@@ -958,8 +980,10 @@ int main(){
                 g[i].addEdge(it.first, it.second);
             }
         }
-
+        g[i].setNumberOfVertex(n);
+        double start_time_scc = getCurrentTimeMlsec();
         g[i].stronglyConnectedComponent(m_graph_shatter, m_sccs[i]);
+        scc_time += getCurrentTimeMlsec() - start_time_scc;
         //mapping between original vertex and scc (DAG)
         m_sccs[i].init(n, g[i].getNumberOfSccs(), g[i].getComponent());
         m_sccs[i].removeForwardEdge();
@@ -999,6 +1023,7 @@ int main(){
     }
 
     std::cout << std::fixed << std::setprecision(6);
-    std::cout << "Time run=" << getCurrentTimeMlsec() - start_time_bridge << "\n";
+    std::cout << "Time run=" << getCurrentTimeMlsec() - start_time << "\n";
+    std::cout << "Strongly Connected Time=" << scc_time << "\n";
     return 0;
 }
