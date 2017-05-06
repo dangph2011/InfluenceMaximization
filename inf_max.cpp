@@ -502,7 +502,7 @@ class DGraph{
         }
 
         //DFS travel
-        bool stronglyConnectedComponent(std::vector<DGraph> &p_graph_shatter, DGraph &p_scc) {
+        bool stronglyConnectedComponent(DGraph &p_scc) {
             n_sccs_ = 0;
         	uint32_t g_time = 0;
             vetex_component_mapping_.assign(out_edge_list_.size(), -1);
@@ -514,8 +514,8 @@ class DGraph{
         	std::stack<std::pair<uint32_t, uint32_t> > f_edge_component;
         	std::stack<uint32_t> f_node_component;
 
-        	uint32_t l_graph_shatter_size_begin = p_graph_shatter.size();
-        	uint32_t l_graph_shatter_size = p_graph_shatter.size();
+        	//uint32_t l_graph_shatter_size_begin = p_graph_shatter.size();
+        	//uint32_t l_graph_shatter_size = p_graph_shatter.size();
 
         	std::vector<std::vector<uint32_t> > l_graph_id(out_edge_list_.size());
             std::vector<bool> f_stack_member(out_edge_list_.size(), false);
@@ -551,14 +551,14 @@ class DGraph{
         						l_node[it].low = l_node[it].discovery_time;
         						l_node[it].predecessor = u;
         						l_node[u].num_child++;
-        						f_edge_component.push(std::pair<uint32_t, uint32_t>(u, it));
+        						//f_edge_component.push(std::pair<uint32_t, uint32_t>(u, it));
                                 //std::cout << "1 Edge: " << u << " " << it << std::endl;
         						check = false;
         						break;
         					} else {
                                 if (f_stack_member[it] == true) { //check if it
             						l_node[u].low = std::min(l_node[u].low, l_node[it].discovery_time);
-                                    f_edge_component.push(std::pair<uint32_t, uint32_t>(u, it));
+                                    //f_edge_component.push(std::pair<uint32_t, uint32_t>(u, it));
                                 }
         					}
         				}
@@ -574,40 +574,41 @@ class DGraph{
 
                                     //retrieve one component.
         							if (l_node[u].low == l_node[u].discovery_time) {
-                                        DGraph l_g(out_edge_list_.size(), l_graph_shatter_size);
+                                        //DGraph l_g(out_edge_list_.size(), l_graph_shatter_size);
 
                                         //add edges into graph component
-                                        auto l_pop_edge = f_edge_component.top();
+                                        //auto l_pop_edge = f_edge_component.top();
                                         //check if edge pop not bridge
-                                        while (l_pop_edge.first != l_predecessor || l_pop_edge.second != u) {
-                                            //add edge to current graph
-                                            l_g.addEdge(l_pop_edge.first, l_pop_edge.second);
-                                            f_edge_component.pop();
-                                            l_pop_edge = f_edge_component.top();
-                                        }
+                                        // while (l_pop_edge.first != l_predecessor || l_pop_edge.second != u) {
+                                        //     //add edge to current graph
+                                        //     l_g.addEdge(l_pop_edge.first, l_pop_edge.second);
+                                        //     f_edge_component.pop();
+                                        //     l_pop_edge = f_edge_component.top();
+                                        // }
 
-                                        f_edge_component.pop();
+                                        //f_edge_component.pop();
+
                                         //add vertex into graph component
                                         auto l_pop_node = f_node_component.top();
                                         while (l_pop_node != u) {
-                                            l_g.addVertex(l_pop_node);
-                                            l_g.setReach(l_pop_node, getReach(l_pop_node));
+                                            //l_g.addVertex(l_pop_node);
+                                            //l_g.setReach(l_pop_node, getReach(l_pop_node));
                                             vetex_component_mapping_[l_pop_node] = n_sccs_;
                                             f_stack_member[l_pop_node] = false;
                                             f_node_component.pop();
                                             l_pop_node = f_node_component.top();
                                         }
                                         //save edge connect two strongly connected component
-                                        l_g.addVertex(l_pop_node);
-                                        l_g.setReach(l_pop_node, getReach(l_pop_node));
+                                        //l_g.addVertex(l_pop_node);
+                                        //l_g.setReach(l_pop_node, getReach(l_pop_node));
                                         f_stack_member[l_pop_node] = false;
                                         vetex_component_mapping_[l_pop_node] = n_sccs_;
                                         f_node_component.pop();
                                         //sort and remove duplicate edges
-                                        l_g.sortAndRemoveDuplicateEdges();
-                                        p_graph_shatter.push_back(l_g);
+                                        //l_g.sortAndRemoveDuplicateEdges();
+                                        //p_graph_shatter.push_back(l_g);
                                         //Increase version
-                                        l_graph_shatter_size++;
+                                        //l_graph_shatter_size++;
                                         n_sccs_++;
                                     }
                                 }
@@ -617,27 +618,27 @@ class DGraph{
         			}
 
                     if (l_node[i].low == l_node[i].discovery_time) {
-            			DGraph l_g(out_edge_list_.size(),l_graph_shatter_size);
+            			//DGraph l_g(out_edge_list_.size(),l_graph_shatter_size);
 
-            			while (!f_edge_component.empty()) {
-            				auto l_pop_edge = f_edge_component.top();
-            				l_g.addEdge(l_pop_edge.first, l_pop_edge.second);
-            				f_edge_component.pop();
-            			}
+            			// while (!f_edge_component.empty()) {
+            			// 	auto l_pop_edge = f_edge_component.top();
+            			// 	l_g.addEdge(l_pop_edge.first, l_pop_edge.second);
+            			// 	f_edge_component.pop();
+            			// }
 
             			while (!f_node_component.empty()) {
             				auto l_pop_node = f_node_component.top();
-            				l_g.addVertex(l_pop_node);
+            				//l_g.addVertex(l_pop_node);
                             //std::cout << "L_pop" << l_pop_node << " " << v_num_ << std::endl;
-            				l_g.setReach(l_pop_node, getReach(l_pop_node));
+            				//l_g.setReach(l_pop_node, getReach(l_pop_node));
                             f_stack_member[l_pop_node] = false;
                             vetex_component_mapping_[l_pop_node] = n_sccs_;
             				f_node_component.pop();
             			}
 
-            			l_g.sortAndRemoveDuplicateEdges();
-            			p_graph_shatter.push_back(l_g);
-            			l_graph_shatter_size++;
+            			//l_g.sortAndRemoveDuplicateEdges();
+            			//p_graph_shatter.push_back(l_g);
+            			//l_graph_shatter_size++;
                         n_sccs_++;
             		}
                 }
@@ -646,7 +647,7 @@ class DGraph{
             for (auto i = 0; i < out_edge_list_.size(); i++) {
                 for (auto &it: out_edge_list_[i]) {
                     if (vetex_component_mapping_[i] != vetex_component_mapping_[it]) {
-                        p_graph_shatter[vetex_component_mapping_[i]].setGraphConnected(vetex_component_mapping_[it], i, it);
+                        //p_graph_shatter[vetex_component_mapping_[i]].setGraphConnected(vetex_component_mapping_[it], i, it);
                         p_scc.addVertex(vetex_component_mapping_[i]);
                         p_scc.addVertex(vetex_component_mapping_[it]);
                         p_scc.addEdge(vetex_component_mapping_[i], vetex_component_mapping_[it]);
@@ -964,7 +965,6 @@ int main(int argc, char **argv) {
     }
 
     //store scc info
-    std::vector<DGraph> m_graph_shatter;
     double start_time = getCurrentTimeMlsec();
     double scc_time = 0;
     //http://en.cppreference.com/w/cpp/numeric/random/uniform_real_distribution
@@ -990,7 +990,7 @@ int main(int argc, char **argv) {
         }
 
         double start_time_scc = getCurrentTimeMlsec();
-        g[i].stronglyConnectedComponent(m_graph_shatter, m_sccs[i]);
+        g[i].stronglyConnectedComponent(m_sccs[i]);
         scc_time += getCurrentTimeMlsec() - start_time_scc;
         //mapping between original vertex and scc (DAG)
         m_sccs[i].init(n, g[i].getNumberOfSccs(), g[i].getComponent());
