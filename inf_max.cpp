@@ -11,6 +11,8 @@
 #include <unistd.h>
 #include <random>
 #include <algorithm>
+#include <tuple>
+#include <functional>
 
 uint16_t k = 200; //The size of seed
 uint16_t R = 10; //The number of DAG
@@ -31,6 +33,11 @@ double getCurrentTimeMlsec(){
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return tv.tv_sec + tv.tv_usec *  1e-6;
+}
+
+bool sortDesc(const std::tuple<uint64_t, uint32_t, uint32_t>& first, const std::tuple<uint64_t, uint32_t, uint32_t>& second)
+{
+    return (std::get<0>(first) > std::get<0>(second));
 }
 
 //struct Node (Vertex)
@@ -702,6 +709,13 @@ class DGraph{
             }
         }
 
+        void updateGainVertex(uint64_t &gain_v, uint32_t v) {
+            if (!computed_vertex_[v]) {
+                gain_v -= sigma_[vetex_component_mapping_[v]];
+                gain_v += computeSigmaVertex(v);
+            }
+        }
+
         void updateGain(std::vector<uint64_t> &gain) {
             for (auto i = 0; i < change_.size(); i++) {
                auto v = change_[i];
@@ -790,12 +804,6 @@ class DGraph{
                     Q.pop();
                 }
             }
-
-            // std::cerr << "Remove:" << std::endl;
-            // for (auto &it : l_remove_vertex)
-            // {
-            //     std::cerr << "\t" << it << std::endl;
-            // }
 
             std::vector<bool> checked(removed_vertex_.size(), false);
             //Reverse DFS to set vertex that reduces gain bases on v
@@ -994,31 +1002,64 @@ int main(int argc, char **argv) {
         m_sccs[i].removeForwardEdge();
         m_sccs[i].getArticulationPoints();
         //sleep(5);
+        //first init gain of all vertex
         m_sccs[i].initGain(m_gain);
     }
 
     auto next = 0;
-    //first seeds
-    for (auto i = 0; i < n; i++) {
-        if (m_gain[i] > m_gain[next]) {
-            next = i;
-        }
-    }
-    m_seeds.push_back(next);
+    //Gain table store gain u, id, flag of vertex u
+    std::vector<std::tuple<uint64_t, uint32_t, uint32_t> > m_gain_table(n);
 
-    for (auto i = 1; i < k; i++) {
-        for (auto i = 0; i < R; i++) {
-            m_sccs[i].removedVertex(next);
-            m_sccs[i].updateGain(m_gain);
-        }
-        next = 0;
-        for (auto i = 0; i < n; i++) {
-            if (m_gain[i] > m_gain[next]) {
-                next = i;
-            }
-        }
-        m_seeds.push_back(next);
+    for (auto i = 0; i < n; i++) {
+        std::get<0>(m_gain_table[i]) = m_gain[i];
+        std::get<1>(m_gain_table[i]) = i;
+        std::get<2>(m_gain_table[i]) = 0;
     }
+
+    std::sort(m_gain_table.begin(), m_gain_table.end(), sortDesc);
+
+    uint32_t t_i, t_flag;
+    //uint64_t t_gain;
+    while (m_seeds.size() < k) {
+        std::tie (std::ignore, t_i, t_flag) = m_gain_table[0];
+        if (t_flag == m_seeds.size()) {
+            m_seeds.push_back(t_i);
+            for (auto i = 0; i < R; i++) {
+                m_sccs[i].removedVertex(t_i);
+                //m_sccs[i].updateGain(m_gain);
+            }
+            m_gain_table.erase(m_gain_table.begin());
+        } else {
+            for (auto i = 0; i < R; i++) {
+                m_sccs[i].updateGainVertex(std::get<0>(m_gain_table[0]), t_i);
+                //m_sccs[i].updateGain(m_gain);
+            }
+            std::get<2>(m_gain_table[0]) = m_seeds.size();
+            std::sort(m_gain_table.begin(), m_gain_table.end(), sortDesc);
+        }
+    }
+
+    //first seeds
+    // for (auto i = 0; i < n; i++) {
+    //     if (m_gain[i] > m_gain[next]) {
+    //         next = i;
+    //     }
+    // }
+    // m_seeds.push_back(next);
+
+    // for (auto i = 1; i < k; i++) {
+    //     for (auto i = 0; i < R; i++) {
+    //         m_sccs[i].removedVertex(next);
+    //         m_sccs[i].updateGain(m_gain);
+    //     }
+    //     next = 0;
+    //     for (auto i = 0; i < n; i++) {
+    //         if (m_gain[i] > m_gain[next]) {
+    //             next = i;
+    //         }
+    //     }
+    //     m_seeds.push_back(next);
+    // }
 
     //Seed array
     std::cerr << "Seeds:" << std::endl;
