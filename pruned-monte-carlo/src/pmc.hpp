@@ -1,6 +1,16 @@
 #include <vector>
-
 using namespace std;
+
+//struct Node (Vertex)
+typedef struct Vertex{
+    int discovery_time;
+    int finish_time;
+    int predecessor;
+    int num_child;
+    int low;
+    Vertex ()
+        : discovery_time(0), finish_time(0), predecessor(-1), num_child(0), low(0) {}
+}Vertex;
 
 class PrunedEstimater {
 private:
@@ -16,19 +26,30 @@ private:
 	vector<int> at_e, at_r;
 
 	vector<bool> visited;
+	vector<bool> articulation;
+    vector<pair<int, int > > forward_edges;
+    vector<pair<int, int > > cross_edges;
 
 	int hub;
 	vector<bool> descendant, ancestor;
 	bool flag;
 
-	void first();
 	int sigma(const int v);
 	inline int unique_child(const int v);
 public:
+	void first();
 	void init(int n, vector<pair<int, int> > &es, vector<int> &comp);
 	int sigma1(const int v);
 	void add(int v);
+    void add_reduce(int vstor);
 	void update(vector<long long> &sums);
+	void updateGainVertex(long long &gain_v, const int v);
+	void articulationPoint();
+	void articulationPointDFS();
+	void dfsArticulationPoint(int &u, vector<Vertex> &l_node, int &g_time);
+    void forwardEdgeDFS();
+    void dfsForwardEdge(int &u, vector<Vertex> &p_node, int &g_time);
+    void removeEdge();
 };
 
 class InfluenceMaximizer {
