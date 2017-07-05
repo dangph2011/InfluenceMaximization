@@ -13,10 +13,13 @@
 #include <algorithm>
 #include <tuple>
 #include <functional>
+//#include "gperftools/profiler.h"
 
 uint16_t k = 200; //The size of seed
 uint16_t R = 10; //The number of DAG
 double pro = 0.01; //The propagation rate
+
+uint32_t count_gain = 0;
 
 enum eColor{
     WHITE,
@@ -86,6 +89,7 @@ class DGraph{
         std::vector<uint64_t> sigma_;
         std::vector<uint64_t> weight_;
         std::vector<uint32_t> change_;
+        std::vector<bool> visited_;
 
     public:
 
@@ -233,19 +237,28 @@ class DGraph{
 		}
 
 		void delEdge(uint32_t u, uint32_t v) {
-			for (auto &it : out_edge_list_[u]) {
-				if (it == v) {
-					out_edge_list_[u].erase(out_edge_list_[u].begin() + (&it - &out_edge_list_[u][0]));
-					break;
-				}
-			}
+            auto lower = std::lower_bound(out_edge_list_[u].begin(), out_edge_list_[u].end(), v);
+            if (lower != out_edge_list_[u].end()) {
+                out_edge_list_[u].erase(lower);
+            }
+			// for (auto &it : out_edge_list_[u]) {
+			// 	if (it == v) {
+			// 		out_edge_list_[u].erase(out_edge_list_[u].begin() + (&it - &out_edge_list_[u][0]));
+			// 		break;
+			// 	}
+			// }
 
-            for (auto &it : in_edge_list_[v]) {
-				if (it == u) {
-					in_edge_list_[v].erase(in_edge_list_[v].begin() + (&it - &in_edge_list_[v][0]));
-					break;
-				}
-			}
+            lower = std::lower_bound(out_edge_list_[v].begin(), out_edge_list_[v].end(), u);
+            if (lower != out_edge_list_[v].end()) {
+                out_edge_list_[v].erase(lower);
+            }
+
+            // for (auto &it : in_edge_list_[v]) {
+			// 	if (it == u) {
+			// 		in_edge_list_[v].erase(in_edge_list_[v].begin() + (&it - &in_edge_list_[v][0]));
+			// 		break;
+			// 	}
+			// }
 		}
 
 		void sortEdges() {
@@ -326,7 +339,7 @@ class DGraph{
         	bool check_out = true;
             std::vector<std::pair<uint32_t, uint32_t> > f_forward_edges;
             std::vector<std::pair<uint32_t, uint32_t> > f_cross_edges;
-            for (int i = 0 ; i < v_num_ ; i++) {
+            for (int i = v_num_ - 1 ; i >=0 ; i--) {
         	//for (auto &i : f_vertex_list) {
         		if (l_node[i].color == WHITE) {
         			//m_num_tree_node++;
@@ -339,7 +352,8 @@ class DGraph{
         				uint32_t u = S.top();
         				//S.pop();
         				check_out = true;
-        				for (auto &it : out_edge_list_[u]) {
+        				for (int k = out_edge_list_[u].size() - 1; k >= 0; k--) {
+                            auto it = out_edge_list_[u][k];
         					if (l_node[it].color == WHITE) {
         						//l_node[it].discovery_time = ++g_time;
         						S.push(it);
@@ -682,6 +696,7 @@ class DGraph{
             articulation_points_.assign(out_edge_list_.size(), false);
             computed_vertex_.assign(p_n, false);
             removed_vertex_.assign(p_n, false);
+            visited_.assign(p_n, false);
             sigma_.assign(p_n, 0);
             weight_.assign(p_nscc, 0);
             component_vertex_.resize(p_nscc);
@@ -709,6 +724,64 @@ class DGraph{
             }
         }
 
+        // void initGain(std::vector<uint64_t> &gain) {
+        //     //std::cerr << "Start gain\n";
+        //     std::vector<uint64_t> l_gain(gain.size(),0);
+        //     for (auto v = 0; v < l_gain.size(); v++) {
+        //         std::stack<uint32_t> Q;
+        //         std::vector<bool> checked(out_edge_list_.size(), false);
+        //         Q.push(v);
+        //         auto flag = true;
+        //         uint64_t delta = 0;
+        //         uint64_t sum_articulation = 0;
+        //         //DFS
+        //         while (!Q.empty()) {
+        //             auto v0 = Q.top();
+        //             flag = true;
+        //             for (auto it : out_edge_list_[v0]) {
+        //                 //std::cerr << "Test ";
+        //                 //std::cerr << removed_vertex_.size() << std::endl;
+        //                 //std::cerr << it << " " << removed_vertex_.size() << std::endl;
+        //                 if (removed_vertex_[it]) {
+    	// 					continue;
+    	// 				}
+        //                 //std::cerr << "Test \n";
+        //                 if (!checked[it]) {
+        //                     checked[it] = true;
+        //                     if (articulation_points_[it]) {
+        //                         if (computed_vertex_[it]) {
+        //                             delta += sigma_[it];
+        //                             continue;
+        //                         }
+        //                         //delta += computeSigmaComponent(it);
+        //                         //continue;
+        //                     }
+        //                     Q.push(it);
+        //                     flag = false;
+        //                     break;
+        //                 }
+        //             }
+        //
+        //             if (flag) {
+        //                 delta += weight_[v0];
+        //                 Q.pop();
+        //             }
+        //         }
+        //     }
+        //
+        //     for (auto i = 0; i < change_.size(); i++) {
+        //        auto v = change_[i];
+        //        gain[v] += computeSigmaVertex(v);
+        //        std::cerr << "Gain of " << v << " " << gain[v] << std::endl;
+        //     }
+        //
+        //
+        // }
+
+        void computeAPGain(std::vector<uint64_t> &gain) {
+
+        }
+
         void updateGainVertex(uint64_t &gain_v, uint32_t v) {
             if (!computed_vertex_[v]) {
                 gain_v -= sigma_[vetex_component_mapping_[v]];
@@ -732,8 +805,31 @@ class DGraph{
             return computeSigmaComponent(vetex_component_mapping_[v]);
         }
 
-        uint64_t computeSigmaComponent(uint32_t v) {
+        uint64_t computeSigmaVertexBFS(uint32_t v) {
+            return computeSigmaComponentBFS(vetex_component_mapping_[v]);
+        }
+
+        uint64_t computeSigmaComponentBFS(uint32_t v) {
             if (computed_vertex_[v]) {
+                return sigma_[v];
+            }
+            computed_vertex_[v] = 0;
+            if (removed_vertex_[v]) {
+                return sigma_[v] = 0;
+            }
+
+            //for ()
+
+            std::queue<uint32_t> Q;
+            return 0;
+
+        }
+
+        uint64_t computeSigmaComponent(uint32_t v) {
+            //std::cerr << "\t--Gain of " << v << std::endl;
+            if (computed_vertex_[v]) {
+                //std::cerr << "\t--Gain of " << v << std::endl;
+                //count_gain++;
                 return sigma_[v];
             }
             computed_vertex_[v] = true;
@@ -741,14 +837,17 @@ class DGraph{
                 return sigma_[v] = 0;
             }
 
-            std::stack<uint32_t> Q;
-            std::vector<bool> checked(out_edge_list_.size(), false);
-            Q.push(v);
+            std::stack<uint32_t> S;
+            std::vector<uint32_t> l_visited_vertex;
+            visited_[v] = true;
+            S.push(v);
+            l_visited_vertex.push_back(v);
             auto flag = true;
             uint64_t delta = 0;
+            uint64_t sum_articulation = 0;
             //DFS
-            while (!Q.empty()) {
-                auto v0 = Q.top();
+            while (!S.empty()) {
+                auto v0 = S.top();
                 flag = true;
                 for (auto it : out_edge_list_[v0]) {
                     //std::cerr << "Test ";
@@ -758,13 +857,18 @@ class DGraph{
 						continue;
 					}
                     //std::cerr << "Test \n";
-                    if (!checked[it]) {
-                        checked[it] = true;
+                    if (!visited_[it]) {
+                        visited_[it] = true;
                         if (articulation_points_[it]) {
+                            // if (computed_vertex_[it]) {
+                            //     delta += sigma_[it];
+                            //     continue;
+                            // }
                             delta += computeSigmaComponent(it);
                             continue;
                         }
-                        Q.push(it);
+                        S.push(it);
+                        l_visited_vertex.push_back(v);
                         flag = false;
                         break;
                     }
@@ -772,8 +876,12 @@ class DGraph{
 
                 if (flag) {
                     delta += weight_[v0];
-                    Q.pop();
+                    S.pop();
                 }
+            }
+
+            for (auto &it : l_visited_vertex) {
+                visited_[it] = false;
             }
             return sigma_[v] = delta;
         }
@@ -943,7 +1051,7 @@ bool readMetis(DGraph &g, std::string p_file_name) {
 int main(int argc, char **argv) {
     std::ios_base::sync_with_stdio(false);
     std::cin.tie(NULL);
-
+    //ProfilerStart("/Users/dangph/InfluenceMaximization/dump.txt");
     //srand(time(NULL));
     // std::vector<std::pair<std::pair<uint32_t, uint32_t>, double> > m_edge_list_pro;
     // if (!readEdgeListPro(m_edge_list_pro, "data/test5.txt")) {
@@ -975,6 +1083,9 @@ int main(int argc, char **argv) {
     //store scc info
     double start_time = getCurrentTimeMlsec();
     double scc_time = 0;
+    double gain_time = 0;
+    double redundant_time = 0;
+    double seed_time = 0;
     //http://en.cppreference.com/w/cpp/numeric/random/uniform_real_distribution
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
@@ -987,6 +1098,7 @@ int main(int argc, char **argv) {
     std::vector<DGraph> g(R);
     for (auto i = 0; i < R; i++) {
         //http://en.cppreference.com/w/cpp/numeric/random/uniform_real_distribution
+        double start_time_scc = getCurrentTimeMlsec();
         g[i].setNumberOfVertex(n);
         for (auto &it : m_edge_list) {
             //Use dis to transform the random unsigned int generated by gen into a double in [0, 1)
@@ -994,29 +1106,37 @@ int main(int argc, char **argv) {
                 g[i].addEdge(it.first, it.second);
             }
         }
-        double start_time_scc = getCurrentTimeMlsec();
         g[i].stronglyConnectedComponent(m_sccs[i]);
         scc_time += getCurrentTimeMlsec() - start_time_scc;
         //mapping between original vertex and scc (DAG)
+        double start_time_redundant = getCurrentTimeMlsec();
         m_sccs[i].init(n, g[i].getNumberOfSccs(), g[i].getComponent());
         m_sccs[i].removeForwardEdge();
         m_sccs[i].getArticulationPoints();
+        redundant_time += getCurrentTimeMlsec() - start_time_redundant;
         //sleep(5);
+        double start_time_gain = getCurrentTimeMlsec();
         //first init gain of all vertex
         m_sccs[i].initGain(m_gain);
+        gain_time += getCurrentTimeMlsec() - start_time_gain;
     }
 
     auto next = 0;
-    //Gain table store gain u, id, flag of vertex u
-    std::vector<std::tuple<uint64_t, uint32_t, uint32_t> > m_gain_table(n);
 
+    double start_seed_time = getCurrentTimeMlsec();
+    //Gain table store gain, id, flag of vertex u
+    std::vector<std::tuple<uint64_t, uint32_t, uint32_t> > m_gain_table(n);
+    //
+    // //assign values to gain table
     for (auto i = 0; i < n; i++) {
         std::get<0>(m_gain_table[i]) = m_gain[i];
         std::get<1>(m_gain_table[i]) = i;
         std::get<2>(m_gain_table[i]) = 0;
     }
 
+    //sort by gain of u
     std::sort(m_gain_table.begin(), m_gain_table.end(), sortDesc);
+
 
     uint32_t t_i, t_flag;
     //uint64_t t_gain;
@@ -1039,6 +1159,7 @@ int main(int argc, char **argv) {
         }
     }
 
+
     //first seeds
     // for (auto i = 0; i < n; i++) {
     //     if (m_gain[i] > m_gain[next]) {
@@ -1046,7 +1167,7 @@ int main(int argc, char **argv) {
     //     }
     // }
     // m_seeds.push_back(next);
-
+    //
     // for (auto i = 1; i < k; i++) {
     //     for (auto i = 0; i < R; i++) {
     //         m_sccs[i].removedVertex(next);
@@ -1061,6 +1182,7 @@ int main(int argc, char **argv) {
     //     m_seeds.push_back(next);
     // }
 
+    seed_time = getCurrentTimeMlsec() - start_seed_time;
     //Seed array
     std::cerr << "Seeds:" << std::endl;
     for (auto &it : m_seeds)
@@ -1069,7 +1191,13 @@ int main(int argc, char **argv) {
     }
 
     std::cerr << std::fixed << std::setprecision(6);
-    std::cerr << "Time run=" << getCurrentTimeMlsec() - start_time << "\n";
+    std::cerr << "Gain=" << gain_time << "\n";
     std::cerr << "Strongly Connected Time=" << scc_time << "\n";
+    std::cerr << "Redundant Time=" << redundant_time << "\n";
+    std::cerr << "Seed Time=" << seed_time << "\n";
+    //std::cerr << "GAIN=" << count_gain;
+    std::cerr << "Time run=" << getCurrentTimeMlsec() - start_time << "\n";
+    //ProfilerFlush();
+    //ProfilerStop();
     return 0;
 }
