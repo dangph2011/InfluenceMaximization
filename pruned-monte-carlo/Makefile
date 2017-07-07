@@ -14,13 +14,13 @@ benchmark_hub: samples/benchmark.cpp src/pmc_hub.cpp
 benchmark_hub_origin: samples/benchmark.cpp src/pmc_origin.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-benchmark_estimate: samples/benchmark.cpp src/benchmark_estimate.cpp
+benchmark_estimate: samples/benchmark.cpp src/pmc_estimate.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 debug: samples/benchmark.cpp src/pmc.cpp
 	$(CXX) $(CXXFLAGS_DEBUG) $^
 
-debug_estimate: samples/benchmark.cpp src/benchmark_estimate.cpp
+debug_estimate: samples/benchmark.cpp src/pmc_estimate.cpp
 	$(CXX) $(CXXFLAGS_DEBUG) $^
 
 .PHONY: clean

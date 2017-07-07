@@ -41,7 +41,7 @@ public:
 	void init(int n, vector<pair<int, int> > &es, vector<int> &comp);
 	int sigma1(const int v);
 	void add(int v);
-    void add_reduce(int vstor);
+    void add_reduce(int v);
 	void update(vector<long long> &sums);
 	void updateGainVertex(long long &gain_v, const int v);
 	void articulationPoint();

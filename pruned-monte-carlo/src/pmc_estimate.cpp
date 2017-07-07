@@ -9,24 +9,6 @@
 
 using namespace std;
 
-template <class InputIterator1, class InputIterator2>
-    int mismatchPosition ( InputIterator1 first1, InputIterator1 last1, InputIterator2 first2 )
-{
-    InputIterator1 begin = first1;
-    while (first1!=last1) {
-        //std::cerr << "F11=" << *first1 << " F22=" << *first2 << std::endl;
-        if (!(*first1 == *first2)) {  // or: if (!pred(*first1,*first2)), for version 2
-            //std::cerr << "F1=" << *first1 << " F2=" << *first2 << std::endl;
-            //return std::distance(begin, first1);
-            break;
-        }
-            //break;
-        ++first1; ++first2;
-    }
-    return std::distance(begin, first1);
-}
-
-
 double getCurrentTimeMlsec(){
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -130,7 +112,7 @@ void PrunedEstimater::init(const int _n, vector<pair<int, int> > &_es,
 	//Looking for hub
 	//double start_time = getCurrentTimeMlsec();
 	first();
-	//cerr << "First Hub=" << getCurrentTimeMlsec() - start_time << endl;
+	//cout << "First Hub=" << getCurrentTimeMlsec() - start_time << endl;
 }
 
 int PrunedEstimater::sigma1(const int v) {
@@ -191,8 +173,9 @@ int PrunedEstimater::sigma(const int v0) {
 			}
 			//read carefully in here
 			//reset vector visited for marking travelled vertex (reduce init time of vector)
-//            cerr << "Vecsize=" << vec.size() << endl;
-			for (int i = 0; i < vec.size(); i++) {
+            //if (vec.size() > 10000)
+            //  cerr << "Vecsize=" << vec.size()<< " " << v0  << endl;
+			for (auto i = 0; i < vec.size(); i++) {
 				visited[vec[i]] = false;
 			}
 			return sigmas[v0] = delta;
@@ -334,7 +317,6 @@ void PrunedEstimater::add(int v0) {
 			}
 		}
 	}
-
 	//ancestor from v, stored in up
 	for (; !Q.empty();) {
 		const int v = Q.front();
@@ -352,8 +334,7 @@ void PrunedEstimater::add(int v0) {
 			}
 		}
 	}
-
-	for (int i = 0; i < vec.size(); i++) {
+	for (auto i = 0; i < vec.size(); i++) {
 		visited[vec[i]] = false;
 	}
 }
@@ -412,7 +393,7 @@ void PrunedEstimater::add_reduce(int v0) {
 		}
 	}
 
-	for (int i = 0; i < vec.size(); i++) {
+	for (auto i = 0; i < vec.size(); i++) {
 		visited[vec[i]] = false;
 	}
 }
@@ -479,7 +460,6 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
             at_e[i] += at_e[i - 1];
             at_r[i] += at_r[i - 1];
         }
-
         vector<int> comp(n);
 
         //nscc: Number of strongly connected component, in other way the number of vertex in DAG
@@ -500,11 +480,10 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
 
         sort(es2.begin(), es2.end());
         es2.erase(unique(es2.begin(), es2.end()), es2.end());
-
         infs[t].init(nscc, es2, comp);
     }
 
-    //cerr << "---Start WHIILE---\n";
+    //cout << "---Start WHIILE---\n";
     while (estimate > 0.1) {
         seeds_y1.clear();
         //seeds_y2.clear();
@@ -530,7 +509,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
     			}
     		}
 
-            //cerr << "GAIN " << t << " " << next << "=" << gain[next] << endl;
+            //cout << "GAIN " << t << " " << next << "=" << gain[next] << endl;
     		//S.push_back(next);
             y1_es += gain[next];
     		for (int j = 0; j < R; j++) {
@@ -545,7 +524,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
         //Generate more R graph
     	for (int t = R; t < 2*R; t++) {
     		Xorshift xs = Xorshift(t);
-
+    
     		int mp = 0;
     		//outgoing node
     		at_e.assign(n + 1, 0);
@@ -593,48 +572,23 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
 
     		sort(es2.begin(), es2.end());
     		es2.erase(unique(es2.begin(), es2.end()), es2.end());
-
     		infs[t].init(nscc, es2, comp);
     	}
 
-	    //std::cerr << "Time before find seed=" << getCurrentTimeMlsec() - start_run << std::endl;
-    	//vector<long long> gain(n);
-        gain.assign(n,0);
-    	//vector<int> S;
-    	//Begin to find seed
-    	for (int t = 0; t < k; t++) {
-    		for (int j = R; j < 2*R; j++) {
-    			infs[j].update(gain);
-    		}
-    		//int next = 0;
-    		//for (int i = 0; i < n; i++) {
-                //	if (gain[i] > gain[next]) {
-    		//		next = i;
-    		//	}
-    		//}
+        for (int t = 0; t < k; t++) {
+            int s = seeds_y1[t];
+            long long gain_s = 0;
+            for (auto j = R; j < R*2; j++) {
+                gain_s += infs[j].sigma1(s);
+            }
 
-            //cerr << "GAIN " << t << " " << next << "=" << gain[next] << endl;
-    		//S.push_back(next);
-            y2_es += gain[seeds_y1[t]];
-    		for (int j = R; j < 2*R; j++) {
-    			infs[j].add(seeds_y1[t]);
-    		}
-    		//seeds_y2.push_back(next);
-    	}
-        //std::cerr << "\t\t\t\tSeed Y1: ";
-        //std::sort(seeds_y1.begin(), seeds_y1.end());
-        //for (auto sy1 : seeds_y1) {
-        //    std::cerr << sy1 << " ";
-        //}
-        //std::cerr << std::endl;
-        //std::cerr << "\t\t\t\tSeed Y2: ";
-        //std::sort(seeds_y2.begin(), seeds_y2.end());
-        //for (auto sy2 : seeds_y2) {
-        //   std::cerr << sy2 << " ";
-        //}
-        //std::cerr << std::endl;
-        //int pos = mismatchPosition(seeds_y1.begin(), seeds_y1.end(), seeds_y2.begin());
-        //estimate = 1 - (double)pos / (double)k;
+            y2_es += gain_s;
+            
+            for (auto j = R; j < R*2; j++) {
+                infs[j].add_reduce(s);
+            }
+        }
+
         if (y1_es < y2_es) {
             estimate = 1 - (double)y1_es / (double)y2_es;
         } else {
@@ -642,12 +596,12 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
         }
 
         R = 2*R;
-        std::cerr << "\t\t\t---R=" << R << " E1=" << y1_es << " E2=" << y2_es << " Es=" << estimate << "  Time Loop=" << getCurrentTimeMlsec() - start_loop << std::endl;
-        //std::cerr << "\t\t\t---R=" << R << " POS=" << pos << " K=" << k << " Es=" << estimate << "  Time Loop=" << getCurrentTimeMlsec() - start_loop << std::endl;
+        std::cout << "\t\t\t---R=" << R << " E1=" << y1_es << " E2=" << y2_es << " Es=" << estimate << "  Time Loop=" << getCurrentTimeMlsec() - start_loop << std::endl;
     }
-    //std::cerr << "R=" << R << std::endl;
 	return seeds_y1;
 }
+
+
 
 int InfluenceMaximizer::scc(vector<int> &comp) {
 	vector<bool> vis(n);
