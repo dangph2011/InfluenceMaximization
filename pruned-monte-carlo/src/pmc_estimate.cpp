@@ -4,15 +4,47 @@
 #include <queue>
 #include <stack>
 #include <algorithm>
+#include <cmath>
 #include <sys/time.h>
 #include "pmc.hpp"
 
 using namespace std;
 
+const double epsilon = 0.3;
+
 double getCurrentTimeMlsec(){
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return tv.tv_sec + tv.tv_usec *  1e-6;
+}
+
+unsigned long long Factorial(int n) {
+    unsigned long long result = 1;
+    for (int i = 0; i <=n; i++) {
+        result *= i;
+    }
+    return result;
+}
+
+unsigned long long Combination(int n, int k){
+    return Factorial(n) / (Factorial(n-k) * Factorial(k));
+}
+
+double CalAlpha(int n) {
+    return sqrt(log(n) + log(2));
+}
+
+double CalBeta(int n, int k) {
+    return sqrt(log(n) + log(2) + log((double)Combination(n,k)));
+}
+
+double CalEpsilon2(int n, int k) {
+    return (epsilon * CalBeta(n,k)) / ((1-(double)1/2)*CalAlpha(n) + CalBeta(n,k));
+}
+
+double CalZstar(int n, int k) {
+    double epsilon2 = CalEpsilon2(n,k);
+    return (1 + epsilon2) * (2 + (double)(2/3) * epsilon2) * ((double)1/(epsilon2*epsilon2)) * log(n * Combination(n,k));
 }
 
 inline int PrunedEstimater::unique_child(const int v) {
@@ -524,7 +556,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
         //Generate more R graph
     	for (int t = R; t < 2*R; t++) {
     		Xorshift xs = Xorshift(t);
-    
+
     		int mp = 0;
     		//outgoing node
     		at_e.assign(n + 1, 0);
@@ -583,7 +615,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
             }
 
             y2_es += gain_s;
-            
+
             for (auto j = R; j < R*2; j++) {
                 infs[j].add_reduce(s);
             }
