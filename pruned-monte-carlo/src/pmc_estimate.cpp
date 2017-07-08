@@ -522,6 +522,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
     //}
     //end of generation first graph
     gain.assign(n,0);
+    int z = (int)ceil(CalZstar(n,k));
 
     for (int t = 1; t < k; t++) {
         //find max reachability of each node
@@ -536,9 +537,13 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
             }
         }
 
-        int z = (int)ceil(CalZstar(n,k));
         while ((gain[next] / infs_size) < (z - seed_reachability / infs_size) / k) {
             //Generate more sample
+            //Extend size
+            if (infs_size >= infs.size()) {
+                infs.resize(infs_size+10);
+            }
+
             Xorshift xs = Xorshift(infs_size);
 
             int mp = 0;
@@ -608,7 +613,11 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
             infs_size++;
         }
         seeds.push_back(next);
+        for (int i = 0; i < infs_size; i++) {
+            infs[i].add(next);
+        }
     }
+    cout << "Number of sample = " << infs_size << endl;
 	return seeds;
 }
 
