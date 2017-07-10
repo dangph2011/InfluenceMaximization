@@ -523,26 +523,35 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
     //end of generation first graph
     gain.assign(n,0);
     int z = (int)ceil(CalZstar(n,k));
-
+    
+    int next = 0;
     for (int t = 1; t < k; t++) {
         //find max reachability of each node
         for (int i = 0; i < infs_size; i++) {
 			infs[i].update(gain);
 		}
 
-        int next = 0;
+        next = 0;
         for (int i = 0; i < n; i++) {
             if (gain[i] > gain[next]) {
                 next = i;
             }
         }
 
-        while ((gain[next] / infs_size) < (z - seed_reachability / infs_size) / k) {
+        cout << "SIZE=" << infs_size << endl;
+        cout << "Z=" << z << " S_REACH=" << seed_reachability << endl;
+        cout << "MAX_REACH=" << (gain[next]) << " COMP=" << ((z - seed_reachability) / k) << endl;
+
+        while ((gain[next]) < (z - seed_reachability) / k) {
             //Generate more sample
             //Extend size
             if (infs_size >= infs.size()) {
                 infs.resize(infs_size+10);
             }
+            cout << "\t\tMAX_SEED=" << next << endl;
+            cout << "\t\tSIZE=" << infs_size << endl;
+            cout << "\t\tZ=" << z << " S_REACH=" << seed_reachability << endl;
+            cout << "\t\tMAX_REACH=" << (gain[next] ) << " COMP=" << ((z - seed_reachability ) / k) << endl;
 
             Xorshift xs = Xorshift(infs_size);
 
@@ -594,7 +603,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
             es2.erase(unique(es2.begin(), es2.end()), es2.end());
             infs[infs_size].init(nscc, es2, comp);
 
-            //infs[infs_size].update(gain);
+            infs[infs_size].update(gain);
 
             //Update reachability of S
             for (int i = 0; i < seeds.size(); i++) {
@@ -612,11 +621,14 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
             }
             infs_size++;
         }
+        seed_reachability += gain[next];
+        cout << "NEXT=" << next << endl;
         seeds.push_back(next);
         for (int i = 0; i < infs_size; i++) {
             infs[i].add(next);
         }
     }
+
     cout << "Number of sample = " << infs_size << endl;
 	return seeds;
 }
