@@ -10,7 +10,7 @@
 
 using namespace std;
 
-const double epsilon = 0.3;
+const double epsilon = 0.1;
 
 double getCurrentTimeMlsec(){
     struct timeval tv;
@@ -43,7 +43,7 @@ double CalBeta(int n, int k) {
 }
 
 double CalEpsilon2(int n, int k) {
-    return (epsilon * CalBeta(n,k)) / ((1-(double)1/2)*CalAlpha(n) + CalBeta(n,k));
+    return (epsilon * CalBeta(n,k)) / ((1-(double)1/M_E)*CalAlpha(n) + CalBeta(n,k));
 }
 
 double CalZstar(int n, int k) {
