@@ -523,7 +523,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
     //end of generation first graph
     gain.assign(n,0);
     int z = (int)ceil(CalZstar(n,k));
-    
+
     int next = 0;
     for (int t = 1; t < k; t++) {
         //find max reachability of each node
