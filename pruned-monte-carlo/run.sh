@@ -1,5 +1,11 @@
 #!/bin/bash
-#LOOP=10
+
+#BSUB -m "fit11"
+#BSUB -J inf_result
+#BSUB -q normal
+#BSUB -e inf_result.err%J
+#BSUB -o inf_result.out%J
+
 GRAPH=("soc-Epinions1.txt" "dblp.txt" "soc-LiveJournal1.txt" "com-orkut.ungraph.txt" "twitter_rv.net" "com-friendster.ungraph.txt")
 GRAPH_LENGTH=${#GRAPH[@]}
 
