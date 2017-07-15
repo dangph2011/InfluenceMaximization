@@ -538,9 +538,9 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
             }
         }
 
-        cout << "SIZE=" << infs_size << endl;
-        cout << "Z=" << z << " S_REACH=" << seed_reachability << endl;
-        cout << "MAX_REACH=" << (gain[next]) << " COMP=" << ((z - seed_reachability) / k) << endl;
+        //cout << "SIZE=" << infs_size << endl;
+        //cout << "Z=" << z << " S_REACH=" << seed_reachability << endl;
+        //cout << "MAX_REACH=" << (gain[next]) << " COMP=" << ((z - seed_reachability) / k) << endl;
 
         while ((gain[next]) < (z - seed_reachability) / k) {
             //Generate more sample
@@ -548,10 +548,10 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
             if (infs_size >= infs.size()) {
                 infs.resize(infs_size+10);
             }
-            cout << "\t\tMAX_SEED=" << next << endl;
-            cout << "\t\tSIZE=" << infs_size << endl;
-            cout << "\t\tZ=" << z << " S_REACH=" << seed_reachability << endl;
-            cout << "\t\tMAX_REACH=" << (gain[next] ) << " COMP=" << ((z - seed_reachability ) / k) << endl;
+            //cout << "\t\tMAX_SEED=" << next << endl;
+            //cout << "\t\tSIZE=" << infs_size << endl;
+            //cout << "\t\tZ=" << z << " S_REACH=" << seed_reachability << endl;
+            //cout << "\t\tMAX_REACH=" << (gain[next] ) << " COMP=" << ((z - seed_reachability ) / k) << endl;
 
             Xorshift xs = Xorshift(infs_size);
 
@@ -622,7 +622,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
             infs_size++;
         }
         seed_reachability += gain[next];
-        cout << "NEXT=" << next << endl;
+        //cout << "NEXT=" << next << endl;
         seeds.push_back(next);
         for (int i = 0; i < infs_size; i++) {
             infs[i].add(next);
