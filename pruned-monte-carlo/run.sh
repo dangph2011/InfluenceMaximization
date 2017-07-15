@@ -1,6 +1,6 @@
 #!/bin/bash
 #LOOP=10
-GRAPH=("soc-Epinions1.txt" "soc-LiveJournal1.txt" "dblp.txt")
+GRAPH=("soc-Epinions1.txt" "dblp.txt" "soc-LiveJournal1.txt" "com-orkut.ungraph.txt" "twitter_rv.net" "com-friendster.ungraph.txt")
 GRAPH_LENGTH=${#GRAPH[@]}
 
 KSEED=("10" "20" "30" "40" "50")
