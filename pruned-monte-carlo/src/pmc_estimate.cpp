@@ -6,11 +6,12 @@
 #include <algorithm>
 #include <cmath>
 #include <sys/time.h>
+#include <random>
 #include "pmc.hpp"
 
 using namespace std;
 
-const double epsilon = 0.5;
+const double epsilon = 0.1;
 
 double getCurrentTimeMlsec(){
     struct timeval tv;
@@ -49,6 +50,10 @@ double CalEpsilon2(int n, int k) {
 double CalZstar(int n, int k) {
     double epsilon2 = CalEpsilon2(n,k);
         return (1 + epsilon2) * (2 + (double)(2/3) * epsilon2) * ((double)1/(epsilon2*epsilon2)) * (log(n) + CombinationLogAppro(n,k));
+}
+
+double boundStop(int n) {
+    return (1+epsilon)*(1/(epsilon*epsilon))*n*log(n);
 }
 
 inline int PrunedEstimater::unique_child(const int v) {
@@ -469,7 +474,12 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
 
     //Generate only 1 sample graph
     //for (int t = 0; t < R; t++) {
-    Xorshift xs = Xorshift(infs_size);
+    //Xorshift xs = Xorshift(infs_size);
+
+    //http://en.cppreference.com/w/cpp/numeric/random/uniform_real_distribution
+    std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+    std::uniform_real_distribution<> dis(0, 1);
 
     int mp = 0;
     //outgoing node
@@ -478,7 +488,8 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
     at_r.assign(n + 1, 0);
     vector<pair<int, int> > ps;
     for (int i = 0; i < m; i++) {
-        if (xs.gen_double() < es[i].second) {
+        //if (xs.gen_double() < es[i].second) {
+        if (dis(gen) < es[i].second) {
             es1[mp++] = es[i].first.second;
             //Count the number of out going node
             at_e[es[i].first.first + 1]++;
@@ -522,7 +533,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
     //}
     //end of generation first graph
     gain.assign(n,0);
-    long long z = n*(long long)ceil(CalZstar(n,k));
+    long long z = (long long)ceil(CalZstar(n,k));
 
     int next = 0;
     for (int t = 1; t < k; t++) {
@@ -553,7 +564,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
             //cout << "\t\tZ=" << z << " S_REACH=" << seed_reachability << endl;
             //cout << "\t\tMAX_REACH=" << (gain[next] ) << " COMP=" << ((z - seed_reachability ) / k) << endl;
 
-            Xorshift xs = Xorshift(infs_size);
+            //Xorshift xs = Xorshift(infs_size);
 
             int mp = 0;
             //outgoing node
@@ -562,7 +573,8 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
             at_r.assign(n + 1, 0);
             vector<pair<int, int> > ps;
             for (int i = 0; i < m; i++) {
-                if (xs.gen_double() < es[i].second) {
+                //if (xs.gen_double() < es[i].second) {
+                if (dis(gen) < es[i].second) {
                     es1[mp++] = es[i].first.second;
                     //Count the number of out going node
                     at_e[es[i].first.first + 1]++;
@@ -612,6 +624,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
                 infs[infs_size].update(gain);
             }
 
+
             //find arg max reachability
             next = 0;
             for (int i = 0; i < n; i++) {
@@ -619,6 +632,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
                     next = i;
                 }
             }
+            cout << "\t\t\t\t\tNumber of sample = " << infs_size << endl;
             infs_size++;
         }
         seed_reachability += gain[next];
