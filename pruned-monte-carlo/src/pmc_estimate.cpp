@@ -11,8 +11,6 @@
 
 using namespace std;
 
-double epsilon = 0.1;
-
 double getCurrentTimeMlsec(){
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -43,17 +41,17 @@ double CalBeta(int n, int k) {
     return sqrt(log(n) + log(2) + CombinationLogAppro(n,k));
 }
 
-double CalEpsilon2(int n, int k) {
-    return (epsilon * CalBeta(n,k)) / ((1-(double)1/M_E)*CalAlpha(n) + CalBeta(n,k));
+double CalEpsilon2(int n, int k, double ep) {
+    return (ep * CalBeta(n,k)) / ((1-(double)1/M_E)*CalAlpha(n) + CalBeta(n,k));
 }
 
-double CalZstar(int n, int k) {
-    double epsilon2 = CalEpsilon2(n,k);
+double CalZstar(int n, int k, double ep) {
+    double epsilon2 = CalEpsilon2(n,k, ep);
         return (1 + epsilon2) * (2 + (double)(2/3) * epsilon2) * ((double)1/(epsilon2*epsilon2)) * (log(n) + CombinationLogAppro(n,k));
 }
 
-double boundStop(int n) {
-    return (1+epsilon)*(1/(epsilon*epsilon))*n*log(n);
+double boundStop(int n, double ep) {
+    return (1+ep)*(1/(ep*ep))*n*log(n);
 }
 
 inline int PrunedEstimater::unique_child(const int v) {
@@ -441,7 +439,7 @@ void PrunedEstimater::add_reduce(int v0) {
 
 vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
 		int k, int R, double ep) {
-    epsilon = ep;
+
 	//double start_run = getCurrentTimeMlsec();
 	n = 0;
 	m = es.size();
@@ -533,7 +531,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
     //}
     //end of generation first graph
     gain.assign(n,0);
-    long long z = (long long)ceil(CalZstar(n,k));
+    long long z = (long long)ceil(CalZstar(n,k,ep));
 
     int next = 0;
     for (int t = 1; t < k; t++) {
