@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
     std::cout << "\t\t\tTime read=" << getTimeMlsec() - start_time << "\n";
     double start_run = getTimeMlsec();
 	vector<int> seeds = im.run(es, k, R, epsilon);
-	for (int i = 0; i < seeds.size(); i++) {
+	for (size_t i = 0; i < seeds.size(); i++) {
 		cout << i << "-th seed =\t" << seeds[i] << endl;
 	}
 

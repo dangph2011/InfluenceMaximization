@@ -216,7 +216,7 @@ int PrunedEstimater::sigma(const int v0) {
 			//reset vector visited for marking travelled vertex (reduce init time of vector)
             //if (vec.size() > 10000)
             //  cerr << "Vecsize=" << vec.size()<< " " << v0  << endl;
-			for (auto i = 0; i < vec.size(); i++) {
+			for (size_t i = 0; i < vec.size(); i++) {
 				visited[vec[i]] = false;
 			}
 			return sigmas[v0] = delta;
@@ -375,7 +375,7 @@ void PrunedEstimater::add(int v0) {
 			}
 		}
 	}
-	for (auto i = 0; i < vec.size(); i++) {
+	for (size_t i = 0; i < vec.size(); i++) {
 		visited[vec[i]] = false;
 	}
 }
@@ -434,7 +434,7 @@ void PrunedEstimater::add_reduce(int v0) {
 		}
 	}
 
-	for (auto i = 0; i < vec.size(); i++) {
+	for (size_t i = 0; i < vec.size(); i++) {
 		visited[vec[i]] = false;
 	}
 }
@@ -618,7 +618,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
             infs[infs_size].update(gain);
 
             //Update reachability of S
-            for (int i = 0; i < seeds.size(); i++) {
+            for (size_t i = 0; i < seeds.size(); i++) {
                 seed_reachability += infs[infs_size].sigma1(seeds[i]);
                 infs[infs_size].add(seeds[i]);
                 infs[infs_size].update(gain);
