@@ -280,7 +280,7 @@ void PrunedEstimater::add(int v0) {
 }
 
 vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
-		const int k, const int R) {
+		const int k, const int R, double epsilon){
 	n = 0;
 	m = es.size();
 	for (int i = 0; i < (int) es.size(); i++) {
