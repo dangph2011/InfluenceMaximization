@@ -62,7 +62,7 @@ private:
 	int scc(vector<int> &comp);
 public:
 	vector<int> run(vector<pair<pair<int, int>, double> > &es, const int k,
-			const int R);
+			const int R, double ep);
 };
 
 // Random Number Generator

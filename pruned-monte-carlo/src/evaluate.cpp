@@ -7,6 +7,7 @@
 #include <sys/time.h>
 #include <random>
 #include "evaluate.hpp"
+#include "pmc.hpp"
 
 double Evaluater::boundStop(int n, double epsilon){
     return (1+epsilon)*(1/(epsilon*epsilon))*n*log(n);
@@ -47,6 +48,9 @@ double Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double
     removed.resize(n,false);
     visited.resize(n, false);
 
+    // vector<bool> flip_coin;
+    // flip_coin.resize(m,false);
+
     //http://en.cppreference.com/w/cpp/numeric/random/uniform_real_distribution
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
@@ -55,16 +59,29 @@ double Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double
     long long bs = (long long)ceil(boundStop(n, epsilon));
 
     int times = 0;
+    // Xorshift xs = Xorshift(times);
+    //
+    // for (int i = 0; i < m; i++) {
+    //     if (xs.gen_double() < es[i].second) {
+    //     //if (dis(gen) < es[i].second) {
+    //         flip_coin[i] = true;
+    //     }
+    // }
 
     while (seed_reachability < bs) {
-        times++;
+
         removed.assign(n,false);
         for (int se : seeds) {
+            if (removed[se]) {
+                continue;
+            }
             queue<int> Q;
             Q.push(se);
             vector<int> vec;
             vec.push_back(se);
             visited[se] = true;
+            //plus itself
+            seed_reachability++;
             for (; !Q.empty();) {
                 const int v = Q.front();
                 Q.pop();
@@ -81,6 +98,8 @@ double Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double
                     if (!visited[u]) {
                         //flip coin to confirm edge exists
                         if (dis(gen) < es[i].second) {
+                        //if (xs.gen_double() < es[i].second) {
+                        //if (flip_coin[i]) {
                             seed_reachability++;
                             visited[u] = true;
                             vec.push_back(u);
@@ -95,7 +114,10 @@ double Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double
                 removed[u1] = true;
             }
         }
+        times++;
+        //cout << "Timesa=" << times << " " << seed_reachability << " " << bs << endl;
     }
     cout << "Need " << times << " to evaluate model\n";
+    cout << "Reachability=" << seed_reachability << endl;
     return (double)seed_reachability / times / n;
 }

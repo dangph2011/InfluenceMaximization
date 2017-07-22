@@ -11,7 +11,7 @@
 
 using namespace std;
 
-const double epsilon = 0.1;
+double epsilon = 0.1;
 
 double getCurrentTimeMlsec(){
     struct timeval tv;
@@ -440,8 +440,8 @@ void PrunedEstimater::add_reduce(int v0) {
 }
 
 vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
-		int k, int R) {
-
+		int k, int R, double ep) {
+    epsilon = ep;
 	//double start_run = getCurrentTimeMlsec();
 	n = 0;
 	m = es.size();
@@ -643,6 +643,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
         }
     }
 
+    cout << "Reachability=" << seed_reachability << endl;
     cout << "Number of sample = " << infs_size << endl;
 	return seeds;
 }
