@@ -4,6 +4,7 @@
 #include <queue>
 #include <stack>
 #include <algorithm>
+#include <random>
 #include "pmc.hpp"
 
 using namespace std;
@@ -297,15 +298,21 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
 	vector<PrunedEstimater> infs(R);
 	vector<int> seeds;
 
+    //http://en.cppreference.com/w/cpp/numeric/random/uniform_real_distribution
+    std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+    std::uniform_real_distribution<> dis(0, 1);
+
 	for (int t = 0; t < R; t++) {
-		Xorshift xs = Xorshift(t);
+		//Xorshift xs = Xorshift(t);
 
 		int mp = 0;
 		at_e.assign(n + 1, 0);
 		at_r.assign(n + 1, 0);
 		vector<pair<int, int> > ps;
 		for (int i = 0; i < m; i++) {
-			if (xs.gen_double() < es[i].second) {
+			//if (xs.gen_double() < es[i].second) {
+            if (dis(gen) < es[i].second) {
 				es1[mp++] = es[i].first.second;
 				at_e[es[i].first.first + 1]++;
 				ps.push_back(make_pair(es[i].first.second, es[i].first.first));
