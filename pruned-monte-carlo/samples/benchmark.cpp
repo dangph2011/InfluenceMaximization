@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <sys/time.h>
 #include "../src/pmc.hpp"
-#include "../src/evaluate.hpp"
 #include "iomanip"
 //#include <gperftools/profiler.h>
 
@@ -53,13 +52,6 @@ int main(int argc, char **argv) {
 	}
 
     std::cout << "\t\t\tTime run=" << getTimeMlsec() - start_run << "\n";
-
-    Evaluater ev;
-    double start_evaluate = getTimeMlsec();
-    double ratio = ev.evaluate(seeds, es, epsilon);
-    cout << "Ratio=" << ratio << endl;
-    std::cout << "\t\t\tTime evaluate=" << getTimeMlsec() - start_evaluate << "\n";
-    std::cout << "\t\t\tTime total=" << getTimeMlsec() - start_time << "\n";
 
     //ProfilerStop();
 	return 0;

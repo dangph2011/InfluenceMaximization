@@ -532,117 +532,130 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
     //end of generation first graph
     gain.assign(n,0);
     long long z = (long long)ceil(CalZstar(n,k,ep));
-
+    double ep2 = CalEpsilon2(n,k,ep);
     int next = 0;
-    for (int t = 1; t < k; t++) {
-        //find max reachability of each node
-        for (int i = 0; i < infs_size; i++) {
-			infs[i].update(gain);
-		}
+    double avr_rc1 = 0;
+    double avr_rc2 = 0;
+    double avr_rc_std = 0;
+    Evaluater ev;
+    ev.init(es);
+    int inter_time = 0;
+    while (!avr_rc_std) {
+        z = z*pow(2,inter_time);
+        for (int t = 0; t < k; t++) {
+            //find max reachability of each node
+            for (int i = 0; i < infs_size; i++) {
+    			infs[i].update(gain);
+    		}
 
-        next = 0;
-        for (int i = 0; i < n; i++) {
-            if (gain[i] > gain[next]) {
-                next = i;
-            }
-        }
-
-        //cout << "SIZE=" << infs_size << endl;
-        //cout << "Z=" << z << " S_REACH=" << seed_reachability << endl;
-        //cout << "MAX_REACH=" << (gain[next]) << " COMP=" << ((z - seed_reachability) / k) << endl;
-
-        while ((gain[next]) < (z - seed_reachability) / k) {
-            //Generate more sample
-            //Extend size
-            if (infs_size >= infs.size()) {
-                infs.resize(infs_size+10);
-            }
-            //cout << "\t\tMAX_SEED=" << next << endl;
-            //cout << "\t\tSIZE=" << infs_size << endl;
-            //cout << "\t\tZ=" << z << " S_REACH=" << seed_reachability << endl;
-            //cout << "\t\tMAX_REACH=" << (gain[next] ) << " COMP=" << ((z - seed_reachability ) / k) << endl;
-
-            //Xorshift xs = Xorshift(infs_size);
-
-            int mp = 0;
-            //outgoing node
-            at_e.assign(n + 1, 0);
-            //incoming node
-            at_r.assign(n + 1, 0);
-            vector<pair<int, int> > ps;
-            for (int i = 0; i < m; i++) {
-                //if (xs.gen_double() < es[i].second) {
-                if (dis(gen) < es[i].second) {
-                    es1[mp++] = es[i].first.second;
-                    //Count the number of out going node
-                    at_e[es[i].first.first + 1]++;
-                    //Reverse: first -> second, second -> first
-                    ps.push_back(make_pair(es[i].first.second, es[i].first.first));
-                }
-            }
-            at_e[0] = 0;
-            sort(ps.begin(), ps.end());
-            for (int i = 0; i < mp; i++) {
-                rs1[i] = ps[i].second;
-                //Count the number of in coming node
-                at_r[ps[i].first + 1]++;
-            }
-            for (int i = 1; i <= n; i++) {
-                at_e[i] += at_e[i - 1];
-                at_r[i] += at_r[i - 1];
-            }
-            vector<int> comp(n);
-
-            //nscc: Number of strongly connected component, in other way the number of vertex in DAG
-            //comp: map original vertex to each scc.
-            int nscc = scc(comp);
-
-            //Generate DAG by mapping original vertex to relatively scc.
-            vector<pair<int, int> > es2;
-            for (int u = 0; u < n; u++) {
-                int a = comp[u];
-                for (int i = at_e[u]; i < at_e[u + 1]; i++) {
-                    int b = comp[es1[i]];
-                    if (a != b) {
-                        es2.push_back(make_pair(a, b));
-                    }
-                }
-            }
-
-            sort(es2.begin(), es2.end());
-            es2.erase(unique(es2.begin(), es2.end()), es2.end());
-            infs[infs_size].init(nscc, es2, comp);
-
-            infs[infs_size].update(gain);
-
-            //Update reachability of S
-            for (size_t i = 0; i < seeds.size(); i++) {
-                seed_reachability += infs[infs_size].sigma1(seeds[i]);
-                infs[infs_size].add(seeds[i]);
-                infs[infs_size].update(gain);
-            }
-
-
-            //find arg max reachability
             next = 0;
             for (int i = 0; i < n; i++) {
                 if (gain[i] > gain[next]) {
                     next = i;
                 }
             }
-            cout << "\t\t\t\t\tNumber of sample = " << infs_size << endl;
-            infs_size++;
-        }
-        seed_reachability += gain[next];
-        //cout << "NEXT=" << next << endl;
-        seeds.push_back(next);
-        for (int i = 0; i < infs_size; i++) {
-            infs[i].add(next);
-        }
-    }
 
-    cout << "Reachability=" << seed_reachability << endl;
-    cout << "Number of sample = " << infs_size << endl;
+            //cout << "SIZE=" << infs_size << endl;
+            //cout << "Z=" << z << " S_REACH=" << seed_reachability << endl;
+            //cout << "MAX_REACH=" << (gain[next]) << " COMP=" << ((z - seed_reachability) / k) << endl;
+
+            while ((gain[next]) < (z - seed_reachability) / k) {
+                //Generate more sample
+                //Extend size
+                if (infs_size >= infs.size()) {
+                    infs.resize(infs_size+10);
+                }
+                //cout << "\t\tMAX_SEED=" << next << endl;
+                //Xorshift xs = Xorshift(infs_size);
+
+                int mp = 0;
+                //outgoing node
+                at_e.assign(n + 1, 0);
+                //incoming node
+                at_r.assign(n + 1, 0);
+                vector<pair<int, int> > ps;
+                for (int i = 0; i < m; i++) {
+                    //if (xs.gen_double() < es[i].second) {
+                    if (dis(gen) < es[i].second) {
+                        es1[mp++] = es[i].first.second;
+                        //Count the number of out going node
+                        at_e[es[i].first.first + 1]++;
+                        //Reverse: first -> second, second -> first
+                        ps.push_back(make_pair(es[i].first.second, es[i].first.first));
+                    }
+                }
+                at_e[0] = 0;
+                sort(ps.begin(), ps.end());
+                for (int i = 0; i < mp; i++) {
+                    rs1[i] = ps[i].second;
+                    //Count the number of in coming node
+                    at_r[ps[i].first + 1]++;
+                }
+                for (int i = 1; i <= n; i++) {
+                    at_e[i] += at_e[i - 1];
+                    at_r[i] += at_r[i - 1];
+                }
+                vector<int> comp(n);
+
+                //nscc: Number of strongly connected component, in other way the number of vertex in DAG
+                //comp: map original vertex to each scc.
+                int nscc = scc(comp);
+
+                //Generate DAG by mapping original vertex to relatively scc.
+                vector<pair<int, int> > es2;
+                for (int u = 0; u < n; u++) {
+                    int a = comp[u];
+                    for (int i = at_e[u]; i < at_e[u + 1]; i++) {
+                        int b = comp[es1[i]];
+                        if (a != b) {
+                            es2.push_back(make_pair(a, b));
+                        }
+                    }
+                }
+
+                sort(es2.begin(), es2.end());
+                es2.erase(unique(es2.begin(), es2.end()), es2.end());
+                infs[infs_size].init(nscc, es2, comp);
+
+                infs[infs_size].update(gain);
+
+                //Update reachability of S
+                for (size_t i = 0; i < seeds.size(); i++) {
+                    seed_reachability += infs[infs_size].sigma1(seeds[i]);
+                    infs[infs_size].add(seeds[i]);
+                    infs[infs_size].update(gain);
+                }
+
+
+                //find arg max reachability
+                next = 0;
+                for (int i = 0; i < n; i++) {
+                    if (gain[i] > gain[next]) {
+                        next = i;
+                    }
+                }
+                infs_size++;
+                //cout << "\t\tSIZE=" << infs_size << endl;
+                //cout << "\t\tZ=" << z << " S_REACH=" << seed_reachability << endl;
+                //cout << "\t\tMAX_REACH=" << (gain[next] ) << " COMP=" << ((z - seed_reachability ) / k) << endl;
+            }
+            seed_reachability += gain[next];
+            //cout << "NEXT=" << next << endl;
+            seeds.push_back(next);
+            for (int i = 0; i < infs_size; i++) {
+                infs[i].add(next);
+            }
+        }
+        cout << "\t\tReachability=" << seed_reachability << endl;
+        cout << "\t\tNumber of sample = " << infs_size << endl;
+        avr_rc1 = seed_reachability / infs_size;
+        double start_evaluate = getCurrentTimeMlsec();
+        avr_rc_std = ev.evaluate(seeds, es, ep2, avr_rc1);
+        cout << "\t\tAverage rc 1 = " << avr_rc1 << endl;
+        cout << "\t\tAverage reachability standardize=" << avr_rc_std << endl;
+        std::cout << "\t\tTime evaluate=" << getCurrentTimeMlsec() - start_evaluate << "\n";
+        inter_time++;
+    }
 	return seeds;
 }
 
@@ -693,4 +706,121 @@ int InfluenceMaximizer::scc(vector<int> &comp) {
 		}
 	}
 	return k;
+}
+
+double Evaluater::boundStop(int n, double epsilon){
+    return (1+epsilon)*(1/(epsilon*epsilon))*n*log(n);
+}
+
+double Evaluater::init(vector<pair<pair<int, int>, double> > &es) {
+    n = 0;
+    m = es.size();
+    for (int i = 0; i < (int) es.size(); i++) {
+        n = max(n, max(es[i].first.first, es[i].first.second) + 1);
+    }
+
+    sort(es.begin(), es.end());
+
+    //List outgoing node
+    es1.resize(m);
+
+    //outgoing node
+    at_e.resize(n + 1);
+
+    int mp = 0;
+    //outgoing node
+    at_e.assign(n + 1, 0);
+
+    for (int i = 0; i < m; i++) {
+        es1[mp++] = es[i].first.second;
+        //Count the number of out going node
+        at_e[es[i].first.first + 1]++;
+    }
+    at_e[0] = 0;
+
+    for (int i = 1; i <= n; i++) {
+        at_e[i] += at_e[i - 1];
+    }
+
+    removed.resize(n,false);
+    visited.resize(n, false);
+
+    // vector<bool> flip_coin;
+    // flip_coin.resize(m,false);
+}
+
+
+double Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double> > &es, double epsilon, double avr_rc1){
+    long long seed_reachability = 0;
+    //double start_run = getCurrentTimeMlsec();
+    double ep2 = epsilon;
+    epsilon = 0.1;
+    //http://en.cppreference.com/w/cpp/numeric/random/uniform_real_distribution
+    std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+    std::uniform_real_distribution<> dis(0, 1);
+
+    long long bs = (long long)ceil(boundStop(n, epsilon));
+    long long max_sample = bs*(ep2+2) / (2*avr_rc1);
+
+    int nu_sample = 0;
+
+    while (seed_reachability < bs && nu_sample < max_sample) {
+
+        removed.assign(n,false);
+        for (int se : seeds) {
+            if (removed[se]) {
+                continue;
+            }
+            queue<int> Q;
+            Q.push(se);
+            vector<int> vec;
+            vec.push_back(se);
+            visited[se] = true;
+            //plus itself
+            seed_reachability++;
+            for (; !Q.empty();) {
+                const int v = Q.front();
+                Q.pop();
+                if (removed[v]) {
+                    continue;
+                }
+
+                for (int i = at_e[v]; i < at_e[v + 1]; i++) {
+                    const int u = es1[i];
+                    if (removed[u]) {
+                        continue;
+                    }
+                    //check if u was removed
+                    if (!visited[u]) {
+                        //flip coin to confirm edge exists
+                        if (dis(gen) < es[i].second) {
+                        //if (xs.gen_double() < es[i].second) {
+                        //if (flip_coin[i]) {
+                            seed_reachability++;
+                            visited[u] = true;
+                            vec.push_back(u);
+                            Q.push(u);
+                        }
+                    }
+                }
+            }
+            //remark visited and mark removed
+            for (auto u1 : vec) {
+                visited[u1] = false;
+                removed[u1] = true;
+            }
+        }
+        nu_sample++;
+        //cout << "Timesa=" << times << " " << seed_reachability << " " << bs << endl;
+    }
+    cout << "\tNeed " << nu_sample << " to evaluate model\n";
+    cout << "\tMax number of sample=" << max_sample << endl;
+    cout << "\tReachability=" << seed_reachability << endl;
+    cout << "\tAverage rc 2 = " << seed_reachability / nu_sample << endl;
+    if (nu_sample < max_sample) {
+        return (double)seed_reachability / nu_sample / n;
+    } else {
+        return 0;
+    }
 }
