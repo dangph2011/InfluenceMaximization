@@ -13,9 +13,7 @@ double Evaluater::boundStop(int n, double epsilon){
     return (1+epsilon)*(1/(epsilon*epsilon))*n*log(n);
 }
 
-double Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double> > &es, double epsilon){
-    long long seed_reachability = 0;
-    //double start_run = getCurrentTimeMlsec();
+double Evaluater::init(vector<pair<pair<int, int>, double> > &es) {
     n = 0;
     m = es.size();
     for (int i = 0; i < (int) es.size(); i++) {
@@ -50,6 +48,12 @@ double Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double
 
     // vector<bool> flip_coin;
     // flip_coin.resize(m,false);
+}
+
+
+double Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double> > &es, double epsilon){
+    long long seed_reachability = 0;
+    //double start_run = getCurrentTimeMlsec();
 
     //http://en.cppreference.com/w/cpp/numeric/random/uniform_real_distribution
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
@@ -59,14 +63,6 @@ double Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double
     long long bs = (long long)ceil(boundStop(n, epsilon));
 
     int times = 0;
-    // Xorshift xs = Xorshift(times);
-    //
-    // for (int i = 0; i < m; i++) {
-    //     if (xs.gen_double() < es[i].second) {
-    //     //if (dis(gen) < es[i].second) {
-    //         flip_coin[i] = true;
-    //     }
-    // }
 
     while (seed_reachability < bs) {
 

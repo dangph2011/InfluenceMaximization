@@ -9,6 +9,8 @@ private:
     vector<bool> visited;
 
     double boundStop(int n, double epsilon);
+
 public:
     double evaluate(vector<int> seeds, vector<pair<pair<int, int>, double> > &es, double epsilon);
+    double init(vector<pair<pair<int, int>, double> > &es);
 };
