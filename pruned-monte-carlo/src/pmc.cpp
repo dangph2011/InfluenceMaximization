@@ -8,6 +8,7 @@
 #include "pmc.hpp"
 
 using namespace std;
+#define GAP 10
 
 inline int PrunedEstimater::unique_child(const int v) {
 	int outdeg = 0, child = -1;
@@ -91,7 +92,7 @@ void PrunedEstimater::init(const int _n, vector<pair<int, int> > &_es,
 		weight[comp[i]]++;
 	}
 
-	first();
+	//first();
 }
 
 int PrunedEstimater::sigma1(const int v) {
@@ -196,12 +197,16 @@ void PrunedEstimater::first() {
 	}
 	ancestor[hub] = false;
 
+    //dangph
+    memo.assign(n, false);
+	removed.assign(n, false);
+
 	for (int i = 0; i < n; i++) {
 		sigma(i);
 	}
 	ancestor.assign(n, false);
 	descendant.assign(n, false);
-
+    up.clear();
 	for (int i = 0; i < n1; i++) {
 		up.push_back(i);
 	}
@@ -294,8 +299,11 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
 	rs1.resize(m);
 	at_e.resize(n + 1);
 	at_r.resize(n + 1);
-
-	vector<PrunedEstimater> infs(R);
+    int infs_size = 0;
+    //int step = 0;
+    //infs_size = GAP*pow(2,step);
+	vector<PrunedEstimater> infs;
+    //vector<PrunedEstimater> infs(infs_size);
 	vector<int> seeds;
 
     //http://en.cppreference.com/w/cpp/numeric/random/uniform_real_distribution
@@ -303,73 +311,98 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     std::uniform_real_distribution<> dis(0, 1);
 
-	for (int t = 0; t < R; t++) {
-		//Xorshift xs = Xorshift(t);
+    double avr_rc1 = 0;
+    //double avr_rc2 = 0;
+    double avr_rc_std = 0;
+    Evaluater ev;
+    ev.init(es);
+    long long seed_reachability = 0;
+    while (!avr_rc_std) {
+        seeds.clear();
+        seed_reachability = 0;
+        infs_size = infs_size + 10;
+        infs.resize(infs_size);
+        //generate double sample size
+    	for (int t = infs_size-10; t < infs_size; t++) {
+    		Xorshift xs = Xorshift(t);
 
-		int mp = 0;
-		at_e.assign(n + 1, 0);
-		at_r.assign(n + 1, 0);
-		vector<pair<int, int> > ps;
-		for (int i = 0; i < m; i++) {
-			//if (xs.gen_double() < es[i].second) {
-            if (dis(gen) < es[i].second) {
-				es1[mp++] = es[i].first.second;
-				at_e[es[i].first.first + 1]++;
-				ps.push_back(make_pair(es[i].first.second, es[i].first.first));
-			}
-		}
-		at_e[0] = 0;
-		sort(ps.begin(), ps.end());
-		for (int i = 0; i < mp; i++) {
-			rs1[i] = ps[i].second;
-			at_r[ps[i].first + 1]++;
-		}
-		for (int i = 1; i <= n; i++) {
-			at_e[i] += at_e[i - 1];
-			at_r[i] += at_r[i - 1];
-		}
+    		int mp = 0;
+    		at_e.assign(n + 1, 0);
+    		at_r.assign(n + 1, 0);
+    		vector<pair<int, int> > ps;
+    		for (int i = 0; i < m; i++) {
+    			if (xs.gen_double() < es[i].second) {
+                //if (dis(gen) < es[i].second) {
+    				es1[mp++] = es[i].first.second;
+    				at_e[es[i].first.first + 1]++;
+    				ps.push_back(make_pair(es[i].first.second, es[i].first.first));
+    			}
+    		}
+    		at_e[0] = 0;
+    		sort(ps.begin(), ps.end());
+    		for (int i = 0; i < mp; i++) {
+    			rs1[i] = ps[i].second;
+    			at_r[ps[i].first + 1]++;
+    		}
+    		for (int i = 1; i <= n; i++) {
+    			at_e[i] += at_e[i - 1];
+    			at_r[i] += at_r[i - 1];
+    		}
 
-		vector<int> comp(n);
+    		vector<int> comp(n);
 
-		int nscc = scc(comp);
+    		int nscc = scc(comp);
 
-		vector<pair<int, int> > es2;
-		for (int u = 0; u < n; u++) {
-			int a = comp[u];
-			for (int i = at_e[u]; i < at_e[u + 1]; i++) {
-				int b = comp[es1[i]];
-				if (a != b) {
-					es2.push_back(make_pair(a, b));
-				}
-			}
-		}
+    		vector<pair<int, int> > es2;
+    		for (int u = 0; u < n; u++) {
+    			int a = comp[u];
+    			for (int i = at_e[u]; i < at_e[u + 1]; i++) {
+    				int b = comp[es1[i]];
+    				if (a != b) {
+    					es2.push_back(make_pair(a, b));
+    				}
+    			}
+    		}
 
-		sort(es2.begin(), es2.end());
-		es2.erase(unique(es2.begin(), es2.end()), es2.end());
+    		sort(es2.begin(), es2.end());
+    		es2.erase(unique(es2.begin(), es2.end()), es2.end());
 
-		infs[t].init(nscc, es2, comp);
-	}
+    		infs[t].init(nscc, es2, comp);
+    	}
 
-	vector<long long> gain(n);
-	vector<int> S;
+        for (int t = 0; t < infs_size; t++) {
+            infs[t].first();
+        }
 
-	for (int t = 0; t < k; t++) {
-		for (int j = 0; j < R; j++) {
-			infs[j].update(gain);
-		}
-		int next = 0;
-		for (int i = 0; i < n; i++) {
-			if (gain[i] > gain[next]) {
-				next = i;
-			}
-		}
+    	vector<long long> gain(n);
+    	vector<int> S;
 
-		S.push_back(next);
-		for (int j = 0; j < R; j++) {
-			infs[j].add(next);
-		}
-		seeds.push_back(next);
-	}
+    	for (int t = 0; t < k; t++) {
+    		for (int j = 0; j < R; j++) {
+    			infs[j].update(gain);
+    		}
+    		int next = 0;
+    		for (int i = 0; i < n; i++) {
+    			if (gain[i] > gain[next]) {
+    				next = i;
+    			}
+    		}
+            seed_reachability += gain[next];
+    		S.push_back(next);
+    		for (int j = 0; j < R; j++) {
+    			infs[j].add(next);
+    		}
+    		seeds.push_back(next);
+    	}
+        cout << "\t\tReachability=" << seed_reachability << endl;
+        cout << "\t\tNumber of sample = " << infs_size << endl;
+        avr_rc1 = seed_reachability / infs_size;
+        //double start_evaluate = getCurrentTimeMlsec();
+        avr_rc_std = ev.evaluate(seeds, es, epsilon, avr_rc1);
+        cout << "\t\tAverage rc 1 = " << avr_rc1 << endl;
+        cout << "\t\tAverage reachability standardize=" << avr_rc_std << endl;
+        //std::cout << "\t\tTime evaluate=" << getCurrentTimeMlsec() - start_evaluate << "\n";
+    }
 	return seeds;
 }
 
@@ -416,4 +449,121 @@ int InfluenceMaximizer::scc(vector<int> &comp) {
 		}
 	}
 	return k;
+}
+
+double Evaluater::boundStop(int n, double epsilon){
+    return (1+epsilon)*(1/(epsilon*epsilon))*n*log(n);
+}
+
+double Evaluater::init(vector<pair<pair<int, int>, double> > &es) {
+    n = 0;
+    m = es.size();
+    for (int i = 0; i < (int) es.size(); i++) {
+        n = max(n, max(es[i].first.first, es[i].first.second) + 1);
+    }
+
+    sort(es.begin(), es.end());
+
+    //List outgoing node
+    es1.resize(m);
+
+    //outgoing node
+    at_e.resize(n + 1);
+
+    int mp = 0;
+    //outgoing node
+    at_e.assign(n + 1, 0);
+
+    for (int i = 0; i < m; i++) {
+        es1[mp++] = es[i].first.second;
+        //Count the number of out going node
+        at_e[es[i].first.first + 1]++;
+    }
+    at_e[0] = 0;
+
+    for (int i = 1; i <= n; i++) {
+        at_e[i] += at_e[i - 1];
+    }
+
+    removed.resize(n,false);
+    visited.resize(n, false);
+
+    // vector<bool> flip_coin;
+    // flip_coin.resize(m,false);
+}
+
+
+double Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double> > &es, double epsilon, double avr_rc1){
+    long long seed_reachability = 0;
+    //double start_run = getCurrentTimeMlsec();
+    double ep2 = epsilon;
+    epsilon = 0.1;
+    //http://en.cppreference.com/w/cpp/numeric/random/uniform_real_distribution
+    std::random_device rd;  //Will be used to obtain a seed for the random number engine
+    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+    std::uniform_real_distribution<> dis(0, 1);
+
+    long long bs = (long long)ceil(boundStop(n, epsilon));
+    long long max_sample = bs*(ep2+2) / (2*avr_rc1);
+
+    int nu_sample = 0;
+
+    while (seed_reachability < bs && nu_sample < max_sample) {
+
+        removed.assign(n,false);
+        for (int se : seeds) {
+            if (removed[se]) {
+                continue;
+            }
+            queue<int> Q;
+            Q.push(se);
+            vector<int> vec;
+            vec.push_back(se);
+            visited[se] = true;
+            //plus itself
+            seed_reachability++;
+            for (; !Q.empty();) {
+                const int v = Q.front();
+                Q.pop();
+                if (removed[v]) {
+                    continue;
+                }
+
+                for (int i = at_e[v]; i < at_e[v + 1]; i++) {
+                    const int u = es1[i];
+                    if (removed[u]) {
+                        continue;
+                    }
+                    //check if u was removed
+                    if (!visited[u]) {
+                        //flip coin to confirm edge exists
+                        if (dis(gen) < es[i].second) {
+                        //if (xs.gen_double() < es[i].second) {
+                        //if (flip_coin[i]) {
+                            seed_reachability++;
+                            visited[u] = true;
+                            vec.push_back(u);
+                            Q.push(u);
+                        }
+                    }
+                }
+            }
+            //remark visited and mark removed
+            for (auto u1 : vec) {
+                visited[u1] = false;
+                removed[u1] = true;
+            }
+        }
+        nu_sample++;
+        //cout << "Timesa=" << times << " " << seed_reachability << " " << bs << endl;
+    }
+    cout << "\tNeed " << nu_sample << " to evaluate model\n";
+    cout << "\tMax number of sample=" << max_sample << endl;
+    cout << "\tReachability=" << seed_reachability << endl;
+    cout << "\tAverage rc 2 = " << (double)seed_reachability / nu_sample << endl;
+    if (nu_sample < max_sample) {
+        return (double)seed_reachability / nu_sample / n;
+    } else {
+        return 0;
+    }
 }

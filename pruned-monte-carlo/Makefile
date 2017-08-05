@@ -5,7 +5,7 @@ CXXFLAGS_DEBUG = -ggdb -std=c++11
 
 all: benchmark
 
-benchmark: samples/benchmark.cpp src/pmc.cpp src/evaluate.cpp
+benchmark: samples/benchmark.cpp src/pmc.cpp
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
 benchmark_hub: samples/benchmark.cpp src/pmc_hub.cpp src/evaluate.cpp
@@ -14,14 +14,14 @@ benchmark_hub: samples/benchmark.cpp src/pmc_hub.cpp src/evaluate.cpp
 benchmark_hub_origin: samples/benchmark.cpp src/pmc_origin.cpp src/evaluate.cpp
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
-benchmark_estimate: samples/benchmark.cpp src/pmc_estimate.cpp src/evaluate.cpp
+benchmark_estimate: samples/benchmark.cpp src/pmc_estimate.cpp
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
 debug: samples/benchmark.cpp src/pmc.cpp src/evaluate.cpp
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
 debug_estimate: samples/benchmark.cpp src/pmc_estimate.cpp src/evaluate.cpp
-	$(CXX) $(CXXFLAGS) $^ -o $@ 
+	$(CXX) $(CXXFLAGS) $^ -o $@
 
 .PHONY: clean
 
