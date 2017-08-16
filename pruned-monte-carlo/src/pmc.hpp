@@ -75,7 +75,7 @@ private:
     double boundStop(int n, double epsilon);
 public:
     double evaluate(vector<int> seeds, vector<pair<pair<int, int>, double> > &es, double epsilon, double avr_rc1);
-    double init(vector<pair<pair<int, int>, double> > &es);
+    void init(vector<pair<pair<int, int>, double> > &es);
 };
 
 // Random Number Generator

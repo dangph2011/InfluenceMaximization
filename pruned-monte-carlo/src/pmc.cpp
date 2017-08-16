@@ -30,7 +30,7 @@ inline int PrunedEstimater::unique_child(const int v) {
 
 void PrunedEstimater::init(const int _n, vector<pair<int, int> > &_es,
 		vector<int> &_comp) {
-	flag = true;
+	//flag = true;
 	n = _n;
 	n1 = _comp.size();
 
@@ -156,6 +156,7 @@ int PrunedEstimater::sigma(const int v0) {
 }
 
 void PrunedEstimater::first() {
+    flag = true;
 	hub = 0;
 	for (int i = 0; i < n; i++) {
 		if ((at_e[i + 1] - at_e[i]) + (at_r[i + 1] - at_r[i])
@@ -204,8 +205,10 @@ void PrunedEstimater::first() {
 	for (int i = 0; i < n; i++) {
 		sigma(i);
 	}
+
 	ancestor.assign(n, false);
 	descendant.assign(n, false);
+
     up.clear();
 	for (int i = 0; i < n1; i++) {
 		up.push_back(i);
@@ -378,7 +381,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
     	vector<int> S;
 
     	for (int t = 0; t < k; t++) {
-    		for (int j = 0; j < R; j++) {
+    		for (int j = 0; j < infs_size; j++) {
     			infs[j].update(gain);
     		}
     		int next = 0;
@@ -389,7 +392,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
     		}
             seed_reachability += gain[next];
     		S.push_back(next);
-    		for (int j = 0; j < R; j++) {
+    		for (int j = 0; j < infs_size; j++) {
     			infs[j].add(next);
     		}
     		seeds.push_back(next);
@@ -455,7 +458,7 @@ double Evaluater::boundStop(int n, double epsilon){
     return (1+epsilon)*(1/(epsilon*epsilon))*n*log(n);
 }
 
-double Evaluater::init(vector<pair<pair<int, int>, double> > &es) {
+void Evaluater::init(vector<pair<pair<int, int>, double> > &es) {
     n = 0;
     m = es.size();
     for (int i = 0; i < (int) es.size(); i++) {
@@ -496,20 +499,20 @@ double Evaluater::init(vector<pair<pair<int, int>, double> > &es) {
 double Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double> > &es, double epsilon, double avr_rc1){
     long long seed_reachability = 0;
     //double start_run = getCurrentTimeMlsec();
-    double ep2 = epsilon;
-    epsilon = 0.1;
+    //double ep2 = epsilon;
+    //epsilon = 0.1;
     //http://en.cppreference.com/w/cpp/numeric/random/uniform_real_distribution
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     std::uniform_real_distribution<> dis(0, 1);
 
     long long bs = (long long)ceil(boundStop(n, epsilon));
-    long long max_sample = bs*(ep2+2) / (2*avr_rc1);
+    //long long max_sample = bs*(epsilon+2) / (2*avr_rc1);
 
     int nu_sample = 0;
 
-    while (seed_reachability < bs && nu_sample < max_sample) {
-
+    //while (seed_reachability < bs && nu_sample < max_sample) {
+    while (seed_reachability < bs) {
         removed.assign(n,false);
         for (int se : seeds) {
             if (removed[se]) {
@@ -558,10 +561,12 @@ double Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double
         //cout << "Timesa=" << times << " " << seed_reachability << " " << bs << endl;
     }
     cout << "\tNeed " << nu_sample << " to evaluate model\n";
-    cout << "\tMax number of sample=" << max_sample << endl;
+    //cout << "\tMax number of sample=" << max_sample << endl;
     cout << "\tReachability=" << seed_reachability << endl;
     cout << "\tAverage rc 2 = " << (double)seed_reachability / nu_sample << endl;
-    if (nu_sample < max_sample) {
+    cout << "\tRATIO=" << (avr_rc1 / ((double)seed_reachability / nu_sample)) - 1 - epsilon/2 << "\n";
+    //if (nu_sample < max_sample && (avr_rc1 / ((double)seed_reachability / nu_sample)) - 1 < epsilon/2) {
+    if ((avr_rc1 / ((double)seed_reachability / nu_sample)) - 1 < epsilon/2) {
         return (double)seed_reachability / nu_sample / n;
     } else {
         return 0;

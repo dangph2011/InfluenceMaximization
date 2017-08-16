@@ -150,7 +150,7 @@ void PrunedEstimater::init(const int _n, vector<pair<int, int> > &_es,
 
 	//Looking for hub
 	//double start_time = getCurrentTimeMlsec();
-	first();
+	//first();
 	//cout << "First Hub=" << getCurrentTimeMlsec() - start_time << endl;
 }
 
@@ -479,87 +479,41 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     std::uniform_real_distribution<> dis(0, 1);
 
-    int mp = 0;
-    //outgoing node
-    at_e.assign(n + 1, 0);
-    //incoming node
-    at_r.assign(n + 1, 0);
-    vector<pair<int, int> > ps;
-    for (int i = 0; i < m; i++) {
-        //if (xs.gen_double() < es[i].second) {
-        if (dis(gen) < es[i].second) {
-            es1[mp++] = es[i].first.second;
-            //Count the number of out going node
-            at_e[es[i].first.first + 1]++;
-            //Reverse: first -> second, second -> first
-            ps.push_back(make_pair(es[i].first.second, es[i].first.first));
-        }
-    }
-    at_e[0] = 0;
-    sort(ps.begin(), ps.end());
-    for (int i = 0; i < mp; i++) {
-        rs1[i] = ps[i].second;
-        //Count the number of in coming node
-        at_r[ps[i].first + 1]++;
-    }
-    for (int i = 1; i <= n; i++) {
-        at_e[i] += at_e[i - 1];
-        at_r[i] += at_r[i - 1];
-    }
-    vector<int> comp(n);
-
-    //nscc: Number of strongly connected component, in other way the number of vertex in DAG
-    //comp: map original vertex to each scc.
-    int nscc = scc(comp);
-
-    //Generate DAG by mapping original vertex to relatively scc.
-    vector<pair<int, int> > es2;
-    for (int u = 0; u < n; u++) {
-        int a = comp[u];
-        for (int i = at_e[u]; i < at_e[u + 1]; i++) {
-            int b = comp[es1[i]];
-            if (a != b) {
-                es2.push_back(make_pair(a, b));
-            }
-        }
-    }
-
-    sort(es2.begin(), es2.end());
-    es2.erase(unique(es2.begin(), es2.end()), es2.end());
-    infs[infs_size].init(nscc, es2, comp);
-    infs_size++;
-    //}
-    //end of generation first graph
-    gain.assign(n,0);
     long long z = (long long)ceil(CalZstar(n,k,ep));
     double ep2 = CalEpsilon2(n,k,ep);
     int next = 0;
     double avr_rc1 = 0;
     double avr_rc2 = 0;
     double avr_rc_std = 0;
+    int current_index = 0;
+    int max_index = 0;
     Evaluater ev;
     ev.init(es);
     int inter_time = 0;
     while (!avr_rc_std) {
+        max_index = infs_size;
+        infs_size = 0;
         z = z*pow(2,inter_time);
+        gain.assign(n,0);
+        seeds.clear();
+        infs.clear();
+        cout << "SEED SIZE=" << seeds.size();
+        seed_reachability = 0;
+        for (int i = 0; i < max_index; i++) {
+            infs[i].first();
+        }
+        cout << "END1\n";
         for (int t = 0; t < k; t++) {
             //find max reachability of each node
             for (int i = 0; i < infs_size; i++) {
     			infs[i].update(gain);
     		}
-
-            next = 0;
-            for (int i = 0; i < n; i++) {
-                if (gain[i] > gain[next]) {
-                    next = i;
-                }
-            }
-
+            cout << "END2\n";
             //cout << "SIZE=" << infs_size << endl;
             //cout << "Z=" << z << " S_REACH=" << seed_reachability << endl;
             //cout << "MAX_REACH=" << (gain[next]) << " COMP=" << ((z - seed_reachability) / k) << endl;
 
-            while ((gain[next]) < (z - seed_reachability) / k) {
+            do {
                 //Generate more sample
                 //Extend size
                 if (infs_size >= infs.size()) {
@@ -616,17 +570,16 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
                 sort(es2.begin(), es2.end());
                 es2.erase(unique(es2.begin(), es2.end()), es2.end());
                 infs[infs_size].init(nscc, es2, comp);
-
+                infs[infs_size].first();
                 infs[infs_size].update(gain);
-
+                cout << "END3\n";
                 //Update reachability of S
                 for (size_t i = 0; i < seeds.size(); i++) {
                     seed_reachability += infs[infs_size].sigma1(seeds[i]);
                     infs[infs_size].add(seeds[i]);
                     infs[infs_size].update(gain);
                 }
-
-
+                cout << "END4\n";
                 //find arg max reachability
                 next = 0;
                 for (int i = 0; i < n; i++) {
@@ -638,13 +591,16 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
                 //cout << "\t\tSIZE=" << infs_size << endl;
                 //cout << "\t\tZ=" << z << " S_REACH=" << seed_reachability << endl;
                 //cout << "\t\tMAX_REACH=" << (gain[next] ) << " COMP=" << ((z - seed_reachability ) / k) << endl;
-            }
+            } while ((gain[next]) < (z - seed_reachability) / k);
+            cout << "END5\n";
             seed_reachability += gain[next];
             //cout << "NEXT=" << next << endl;
             seeds.push_back(next);
+            cout << "END6 " << infs_size << " " << next << "\n";
             for (int i = 0; i < infs_size; i++) {
                 infs[i].add(next);
             }
+            cout << "END7\n";
         }
         cout << "\t\tReachability=" << seed_reachability << endl;
         cout << "\t\tNumber of sample = " << infs_size << endl;
@@ -653,7 +609,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
         avr_rc_std = ev.evaluate(seeds, es, ep2, avr_rc1);
         cout << "\t\tAverage rc 1 = " << avr_rc1 << endl;
         cout << "\t\tAverage reachability standardize=" << avr_rc_std << endl;
-        std::cout << "\t\tTime evaluate=" << getCurrentTimeMlsec() - start_evaluate << "\n";
+        cout << "\t\tTime evaluate=" << getCurrentTimeMlsec() - start_evaluate << "\n";
         inter_time++;
     }
 	return seeds;
@@ -712,7 +668,7 @@ double Evaluater::boundStop(int n, double epsilon){
     return (1+epsilon)*(1/(epsilon*epsilon))*n*log(n);
 }
 
-double Evaluater::init(vector<pair<pair<int, int>, double> > &es) {
+void Evaluater::init(vector<pair<pair<int, int>, double> > &es) {
     n = 0;
     m = es.size();
     for (int i = 0; i < (int) es.size(); i++) {
@@ -748,7 +704,6 @@ double Evaluater::init(vector<pair<pair<int, int>, double> > &es) {
     // vector<bool> flip_coin;
     // flip_coin.resize(m,false);
 }
-
 
 double Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double> > &es, double epsilon, double avr_rc1){
     long long seed_reachability = 0;
@@ -817,8 +772,9 @@ double Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double
     cout << "\tNeed " << nu_sample << " to evaluate model\n";
     cout << "\tMax number of sample=" << max_sample << endl;
     cout << "\tReachability=" << seed_reachability << endl;
-    cout << "\tAverage rc 2 = " << seed_reachability / nu_sample << endl;
-    if (nu_sample < max_sample) {
+    cout << "\tAverage rc 2 = " << (double)seed_reachability / nu_sample << endl;
+    cout << "\tRATIO=" << (avr_rc1 / ((double)seed_reachability / nu_sample)) - 1 - ep2/2 << "\n";
+    if (nu_sample < max_sample && (avr_rc1 / ((double)seed_reachability / nu_sample)) - 1 >= ep2/2) {
         return (double)seed_reachability / nu_sample / n;
     } else {
         return 0;
