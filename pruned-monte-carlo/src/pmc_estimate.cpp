@@ -716,11 +716,13 @@ double Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double
     std::uniform_real_distribution<> dis(0, 1);
 
     long long bs = (long long)ceil(boundStop(n, epsilon));
-    long long max_sample = bs*(ep2+2) / (2*avr_rc1);
+    long long max_sample = bs*(epsilon+2) / (2*avr_rc1);
+    //cout << "\tMax number of sample=" << max_sample << endl;
 
     int nu_sample = 0;
 
-    while (seed_reachability < bs && nu_sample < max_sample) {
+    //while (seed_reachability < bs && nu_sample < max_sample) {
+    while (seed_reachability < bs) {
 
         removed.assign(n,false);
         for (int se : seeds) {
@@ -774,7 +776,8 @@ double Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double
     cout << "\tReachability=" << seed_reachability << endl;
     cout << "\tAverage rc 2 = " << (double)seed_reachability / nu_sample << endl;
     cout << "\tRATIO=" << (avr_rc1 / ((double)seed_reachability / nu_sample)) - 1 - ep2/2 << "\n";
-    if (nu_sample < max_sample && (avr_rc1 / ((double)seed_reachability / nu_sample)) - 1 >= ep2/2) {
+    //if (nu_sample < max_sample && (avr_rc1 / ((double)seed_reachability / nu_sample)) - 1 < epsilon/2) {
+    if ((avr_rc1 / ((double)seed_reachability / nu_sample)) - 1 < epsilon/2) {
         return (double)seed_reachability / nu_sample / n;
     } else {
         return 0;

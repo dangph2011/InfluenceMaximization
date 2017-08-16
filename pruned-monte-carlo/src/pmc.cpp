@@ -378,7 +378,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
         }
 
     	vector<long long> gain(n);
-    	vector<int> S;
+    	//vector<int> S;
 
     	for (int t = 0; t < k; t++) {
     		for (int j = 0; j < infs_size; j++) {
@@ -391,7 +391,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
     			}
     		}
             seed_reachability += gain[next];
-    		S.push_back(next);
+    		//S.push_back(next);
     		for (int j = 0; j < infs_size; j++) {
     			infs[j].add(next);
     		}
@@ -507,8 +507,8 @@ double Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double
     std::uniform_real_distribution<> dis(0, 1);
 
     long long bs = (long long)ceil(boundStop(n, epsilon));
-    //long long max_sample = bs*(epsilon+2) / (2*avr_rc1);
-
+    long long max_sample = bs*(epsilon+2) / (2*avr_rc1);
+    cout << "\tMax number of sample=" << max_sample << endl;
     int nu_sample = 0;
 
     //while (seed_reachability < bs && nu_sample < max_sample) {
