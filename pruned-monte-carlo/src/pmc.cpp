@@ -508,7 +508,7 @@ double Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double
 
     long long bs = (long long)ceil(boundStop(n, epsilon));
     long long max_sample = bs*(epsilon+2) / (2*avr_rc1);
-    cout << "\tMax number of sample=" << max_sample << endl;
+    //cout << "\tMax number of sample=" << max_sample << endl;
     int nu_sample = 0;
 
     //while (seed_reachability < bs && nu_sample < max_sample) {
@@ -561,7 +561,7 @@ double Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double
         //cout << "Timesa=" << times << " " << seed_reachability << " " << bs << endl;
     }
     cout << "\tNeed " << nu_sample << " to evaluate model\n";
-    //cout << "\tMax number of sample=" << max_sample << endl;
+    cout << "\tMax number of sample=" << max_sample << endl;
     cout << "\tReachability=" << seed_reachability << endl;
     cout << "\tAverage rc 2 = " << (double)seed_reachability / nu_sample << endl;
     cout << "\tRATIO=" << (avr_rc1 / ((double)seed_reachability / nu_sample)) - 1 - epsilon/2 << "\n";
