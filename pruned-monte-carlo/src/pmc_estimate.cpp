@@ -483,9 +483,9 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
     double ep2 = CalEpsilon2(n,k,ep);
     int next = 0;
     double avr_rc1 = 0;
-    double avr_rc2 = 0;
+    //double avr_rc2 = 0;
     double avr_rc_std = 0;
-    int current_index = 0;
+    //int current_index = 0;
     int max_index = 0;
     Evaluater ev;
     ev.init(es);
@@ -494,10 +494,12 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
         max_index = infs_size;
         infs_size = 0;
         z = z*pow(2,inter_time);
+        cout << "\t\tZSTAR =" << z << endl;
         gain.assign(n,0);
         seeds.clear();
-        infs.clear();
-        //cout << "SEED SIZE=" << seeds.size();
+        //reuse sample
+        //infs.clear();
+        //cout << "SEED SIZE=" << seeds.size() << endl;
         seed_reachability = 0;
         // for (int i = 0; i < max_index; i++) {
         //     infs[i].first();
@@ -513,7 +515,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
 
             do {
                 //if size of Infs less than max_index, we can use existed infs array
-                if (infs_size > max_index) {
+                if (infs_size >= max_index) {
                     //Generate more sample
                     //Extend size
                     if (infs_size >= infs.size()) {
@@ -704,6 +706,7 @@ void Evaluater::init(vector<pair<pair<int, int>, double> > &es) {
 }
 
 double Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double> > &es, double epsilon, double avr_rc1){
+    return 0;
     long long seed_reachability = 0;
     //double start_run = getCurrentTimeMlsec();
     double ep2 = epsilon;
