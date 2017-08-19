@@ -496,6 +496,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
         z = z*pow(2,inter_time);
         cout << "\t\tZSTAR =" << z << endl;
         gain.assign(n,0);
+        next = 0;
         seeds.clear();
         //reuse sample
         //infs.clear();
@@ -513,7 +514,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
             //cout << "Z=" << z << " S_REACH=" << seed_reachability << endl;
             //cout << "MAX_REACH=" << (gain[next]) << " COMP=" << ((z - seed_reachability) / k) << endl;
 
-            do {
+            while ((gain[next]) < (z - seed_reachability) / k){
                 //if size of Infs less than max_index, we can use existed infs array
                 if (infs_size >= max_index) {
                     //Generate more sample
@@ -594,7 +595,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
                 //cout << "\t\tSIZE=" << infs_size << endl;
                 //cout << "\t\tZ=" << z << " S_REACH=" << seed_reachability << endl;
                 //cout << "\t\tMAX_REACH=" << (gain[next] ) << " COMP=" << ((z - seed_reachability ) / k) << endl;
-            } while ((gain[next]) < (z - seed_reachability) / k);
+            }
             seed_reachability += gain[next];
             //cout << "NEXT=" << next << endl;
             seeds.push_back(next);
@@ -706,11 +707,11 @@ void Evaluater::init(vector<pair<pair<int, int>, double> > &es) {
 }
 
 double Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double> > &es, double epsilon, double avr_rc1){
-    return 0;
+    //return 0;
     long long seed_reachability = 0;
     //double start_run = getCurrentTimeMlsec();
     double ep2 = epsilon;
-    epsilon = 0.1;
+    //epsilon = 0.1;
     //http://en.cppreference.com/w/cpp/numeric/random/uniform_real_distribution
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
