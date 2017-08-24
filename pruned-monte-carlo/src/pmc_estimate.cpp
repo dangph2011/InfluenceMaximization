@@ -38,11 +38,11 @@ double CalAlpha(int n) {
 }
 
 double CalBeta(int n, int k) {
-    return sqrt(log(n) + log(2) + CombinationLogAppro(n,k));
+    return sqrt((1-(double)1/M_E) * (log(n) + log(2) + CombinationLogAppro(n,k)));
 }
 
 double CalEpsilon2(int n, int k, double ep) {
-    return (ep * CalBeta(n,k)) / ((1-(double)1/M_E)*CalAlpha(n) + CalBeta(n,k));
+    return (CalAlpha(n)) / ((1-(double)1/M_E)*CalAlpha(n) + CalBeta(n,k));
 }
 
 double CalZstar(int n, int k, double ep) {
@@ -489,12 +489,9 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
     int max_index = 0;
     Evaluater ev;
     ev.init(es);
-    int inter_time = 0;
-    while (!avr_rc_std) {
+    while (true) {
         max_index = infs_size;
         infs_size = 0;
-        z = z*pow(2,inter_time);
-        cout << "\t\tZSTAR =" << z << endl;
         gain.assign(n,0);
         next = 0;
         seeds.clear();
@@ -608,10 +605,14 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
         avr_rc1 = seed_reachability / infs_size;
         double start_evaluate = getCurrentTimeMlsec();
         avr_rc_std = ev.evaluate(seeds, es, ep2, avr_rc1);
-        cout << "\t\tAverage rc 1 = " << avr_rc1 << endl;
-        cout << "\t\tAverage reachability standardize=" << avr_rc_std << endl;
         cout << "\t\tTime evaluate=" << getCurrentTimeMlsec() - start_evaluate << "\n";
-        inter_time++;
+        cout << "\t\tAverage rc 1 = " << avr_rc1 << endl;
+        if (!avr_rc_std) {
+            cout << "\t\tAverage reachability standardize=" << avr_rc_std << endl;
+            break;
+        }
+        z = z*2;
+        cout << "\t\tZSTAR =" << z << endl;
     }
 	return seeds;
 }
