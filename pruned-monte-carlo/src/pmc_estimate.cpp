@@ -607,7 +607,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
         avr_rc_std = ev.evaluate(seeds, es, ep2, avr_rc1);
         cout << "\t\tTime evaluate=" << getCurrentTimeMlsec() - start_evaluate << "\n";
         cout << "\t\tAverage rc 1 = " << avr_rc1 << endl;
-        if (!avr_rc_std) {
+        if (avr_rc_std) {
             cout << "\t\tAverage reachability standardize=" << avr_rc_std << endl;
             break;
         }
@@ -711,7 +711,7 @@ double Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double
     //return 0;
     long long seed_reachability = 0;
     //double start_run = getCurrentTimeMlsec();
-    double ep2 = epsilon;
+    //double ep2 = epsilon;
     //epsilon = 0.1;
     //http://en.cppreference.com/w/cpp/numeric/random/uniform_real_distribution
     std::random_device rd;  //Will be used to obtain a seed for the random number engine
@@ -777,7 +777,7 @@ double Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double
     cout << "\tMax number of sample=" << max_sample << endl;
     cout << "\tReachability=" << seed_reachability << endl;
     cout << "\tAverage rc 2 = " << (double)seed_reachability / nu_sample << endl;
-    cout << "\tRATIO=" << (avr_rc1 / ((double)seed_reachability / nu_sample)) - 1 - ep2/2 << "\n";
+    cout << "\tRATIO=" << (avr_rc1 / ((double)seed_reachability / nu_sample)) - 1 - epsilon/2 << "\n";
     //if (nu_sample < max_sample && (avr_rc1 / ((double)seed_reachability / nu_sample)) - 1 < epsilon/2) {
     if ((avr_rc1 / ((double)seed_reachability / nu_sample)) - 1 < epsilon/2) {
         return (double)seed_reachability / nu_sample / n;
