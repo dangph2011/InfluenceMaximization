@@ -397,13 +397,13 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
     		}
     		seeds.push_back(next);
     	}
-        cout << "\t\tReachability=" << seed_reachability << endl;
-        cout << "\t\tNumber of sample = " << infs_size << endl;
+        cout << "\t\t\t\tReachability=" << seed_reachability << endl;
+        cout << "\t\t\t\tNumber of sample = " << infs_size << endl;
         avr_rc1 = seed_reachability / infs_size;
         //double start_evaluate = getCurrentTimeMlsec();
         avr_rc_std = ev.evaluate(seeds, es, epsilon, avr_rc1);
-        cout << "\t\tAverage rc 1 = " << avr_rc1 << endl;
-        cout << "\t\tAverage reachability standardize=" << avr_rc_std << endl;
+        cout << "\t\t\t\tAverage rc 1 = " << avr_rc1 << endl;
+        cout << "\t\t\t\tAverage reachability standardize=" << avr_rc_std << endl;
         //std::cout << "\t\tTime evaluate=" << getCurrentTimeMlsec() - start_evaluate << "\n";
     }
 	return seeds;
@@ -496,7 +496,7 @@ void Evaluater::init(vector<pair<pair<int, int>, double> > &es) {
 }
 
 
-double Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double> > &es, double epsilon, double avr_rc1){
+bool Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double> > &es, double epsilon, double avr_rc1){
     long long seed_reachability = 0;
     //double start_run = getCurrentTimeMlsec();
     //double ep2 = epsilon;
@@ -558,17 +558,27 @@ double Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double
             }
         }
         nu_sample++;
+        if (nu_sample > max_sample) {
+            cout << "\t\t\t\t\tEvaluate number" << nu_sample << "\n";
+            cout << "\t\t\t\t\tMax number of sample=" << max_sample << endl;
+            cout << "\t\t\t\t\tReachability=" << seed_reachability << endl;
+            cout << "\t\t\t\t\tAverage rc 2 = " << (double)seed_reachability / nu_sample << endl;
+            cout << "\t\t\t\t\tRATIO=" << (avr_rc1 / ((double)seed_reachability / nu_sample)) - 1 - epsilon/2 << "\n";
+            cout << "\t\t\t\t\tStandardize=" << (double)seed_reachability / nu_sample / n;
+            return false;
+        }
         //cout << "Timesa=" << times << " " << seed_reachability << " " << bs << endl;
     }
-    cout << "\tNeed " << nu_sample << " to evaluate model\n";
-    cout << "\tMax number of sample=" << max_sample << endl;
-    cout << "\tReachability=" << seed_reachability << endl;
-    cout << "\tAverage rc 2 = " << (double)seed_reachability / nu_sample << endl;
-    cout << "\tRATIO=" << (avr_rc1 / ((double)seed_reachability / nu_sample)) - 1 - epsilon/2 << "\n";
+    cout << "\t\t\t\t\tEvaluate number" << nu_sample << "\n";
+    cout << "\t\t\t\t\tMax number of sample=" << max_sample << endl;
+    cout << "\t\t\t\t\tReachability=" << seed_reachability << endl;
+    cout << "\t\t\t\t\tAverage rc 2 = " << (double)seed_reachability / nu_sample << endl;
+    cout << "\t\t\t\t\tRATIO=" << (avr_rc1 / ((double)seed_reachability / nu_sample)) - 1 - epsilon/2 << "\n";
+    cout << "\t\t\t\t\tStandardize=" << (double)seed_reachability / nu_sample / n;
     //if (nu_sample < max_sample && (avr_rc1 / ((double)seed_reachability / nu_sample)) - 1 < epsilon/2) {
     if ((avr_rc1 / ((double)seed_reachability / nu_sample)) - 1 < epsilon/2) {
-        return (double)seed_reachability / nu_sample / n;
+        return true;
     } else {
-        return 0;
+        return false;
     }
 }

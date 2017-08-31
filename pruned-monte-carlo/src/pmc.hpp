@@ -1,4 +1,4 @@
-#include <vector>
+    #include <vector>
 using namespace std;
 
 //struct Node (Vertex)
@@ -74,7 +74,7 @@ private:
 
     double boundStop(int n, double epsilon);
 public:
-    double evaluate(vector<int> seeds, vector<pair<pair<int, int>, double> > &es, double epsilon, double avr_rc1);
+    bool evaluate(vector<int> seeds, vector<pair<pair<int, int>, double> > &es, double epsilon, double avr_rc1);
     void init(vector<pair<pair<int, int>, double> > &es);
 };
 
