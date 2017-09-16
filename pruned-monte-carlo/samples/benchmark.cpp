@@ -44,14 +44,14 @@ int main(int argc, char **argv) {
 	is.close();
 
 	InfluenceMaximizer im;
-    std::cout << "\t\t\tTime read=" << getTimeMlsec() - start_time << "\n";
+    std::cout << "\t\tTime read=" << getTimeMlsec() - start_time << "\n";
     double start_run = getTimeMlsec();
 	vector<int> seeds = im.run(es, k, R, epsilon);
 	for (size_t i = 0; i < seeds.size(); i++) {
 		cout << i << "-th seed =\t" << seeds[i] << endl;
 	}
 
-    std::cout << "\t\t\tTime run=" << getTimeMlsec() - start_run << "\n";
+    std::cout << "\t\tTime run=" << getTimeMlsec() - start_run << "\n";
 
     //ProfilerStop();
 	return 0;
