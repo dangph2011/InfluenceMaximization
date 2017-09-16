@@ -562,7 +562,9 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
     //Init z value
     cout << "\t\t\t\tZSTAR first =" << z << endl;
     cout << "First Node=" << _first_nodes_avgrc  << " Multi=" << _first_nodes_avgrc / z + 1 << " Z=" << z << endl;
-    z = (_first_nodes_avgrc / z + 1) * z;
+    while (z < _first_nodes_avgrc) {
+        z = z*2;
+    }
     cout << "\t\tExamized time=" << getCurrentTimeMlsec() - _time_examize_start << endl;
     cout << "\t\t\t\tZSTAR after=" << z << endl;
     double _evaluate_time = 0;
