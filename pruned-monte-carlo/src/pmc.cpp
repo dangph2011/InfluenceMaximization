@@ -513,7 +513,9 @@ bool Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double> 
 
     //while (seed_reachability < bs && nu_sample < max_sample) {
     while (seed_reachability < bs) {
+        double time_assign_start = getCurrentTimeMlsec();
         removed.assign(n,false);
+        time_assign += getCurrentTimeMlsec() - time_assign_start;
         for (int se : seeds) {
             if (removed[se]) {
                 continue;
@@ -521,42 +523,45 @@ bool Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double> 
             queue<int> Q;
             Q.push(se);
             vector<int> vec;
-            vec.push_back(se);
-            visited[se] = true;
+            //vec.push_back(se);
+            removed[se] = true;
             //plus itself
             seed_reachability++;
             for (; !Q.empty();) {
                 const int v = Q.front();
                 Q.pop();
-                if (removed[v]) {
-                    continue;
-                }
-
+                // if (removed[v]) {
+                //     continue;
+                // }
                 for (int i = at_e[v]; i < at_e[v + 1]; i++) {
                     const int u = es1[i];
-                    if (removed[u]) {
-                        continue;
-                    }
+                    // if (removed[u]) {
+                    //     continue;
+                    // }
                     //check if u was removed
-                    if (!visited[u]) {
+                    //if (!visited[u]) {
+                    if (!removed[u]) {
                         //flip coin to confirm edge exists
                         if (dis(gen) < es[i].second) {
                         //if (xs.gen_double() < es[i].second) {
                         //if (flip_coin[i]) {
                             seed_reachability++;
-                            visited[u] = true;
-                            vec.push_back(u);
+                            removed[u] = true;
+                            //double time_push_back_start = getCurrentTimeMlsec();
+                            //vec.push_back(u);
+                            //time_push_back += getCurrentTimeMlsec() - time_push_back_start;
                             Q.push(u);
                         }
                     }
                 }
             }
             //remark visited and mark removed
-            for (auto u1 : vec) {
-                visited[u1] = false;
-                removed[u1] = true;
-            }
+            // for (auto u1 : vec) {
+            //     visited[u1] = false;
+            //     removed[u1] = true;
+            // }
         }
+        nu_sample++;
         nu_sample++;
         if (nu_sample > max_sample) {
             cout << "\t\t\t\t\tEvaluate number" << nu_sample << "\n";
