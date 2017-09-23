@@ -565,6 +565,9 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
     while (z < _first_nodes_avgrc) {
         z = z*2;
     }
+    // while (z > _first_nodes_avgrc) {
+    //     z = z/2;
+    // }
     cout << "\t\tExamized time=" << getCurrentTimeMlsec() - _time_examize_start << endl;
     cout << "\t\t\t\tZSTAR after=" << z << endl;
     double _evaluate_time = 0;
@@ -590,7 +593,13 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
             //cout << "SIZE=" << infs_size << endl;
             //cout << "Z=" << z << " S_REACH=" << seed_reachability << endl;
             //cout << "MAX_REACH=" << (gain[next]) << " COMP=" << ((z - seed_reachability) / k) << endl;
-
+            //find arg max reachability
+            next = 0;
+            for (int i = 0; i < n; i++) {
+                if (gain[i] > gain[next]) {
+                    next = i;
+                }
+            }
             while ((gain[next]) < (((z - seed_reachability) / k) + 1)){
                 if (infs_size >= infs.size()) {
                     infs.resize(infs_size+10);
@@ -801,7 +810,7 @@ bool Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double> 
     //cout << "\tMax number of sample=" << max_sample << endl;
 
     int nu_sample = 0;
-
+    
     //while (seed_reachability < sc && nu_sample < max_sample) {
     while (seed_reachability < sc) {
         removed.assign(n,false);
