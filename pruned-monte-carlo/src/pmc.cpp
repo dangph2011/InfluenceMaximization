@@ -628,10 +628,10 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
     double _evaluate_time = 0;
     double _find_seed_time_start = getCurrentTimeMlsec();
     int iteration_time = 0;
+    infs_size = 5;
     while (true) {
         iteration_time++;
         infs.clear();
-        infs_size = infs_size + 10;
         //gain.assign(n,0);
         //next = 0;
         seeds.clear();
@@ -726,6 +726,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
 
         //cout << "\t\t\t\tAverage reachability standardize=" << avr_rc_std << endl;
         //std::cout << "\t\tTime evaluate=" << getCurrentTimeMlsec() - start_evaluate << "\n";
+        infs_size = infs_size * 2;
     }
     cout << "Iteration Time=" << iteration_time << endl;
     cout << "\t\tEvaluate Time=" << _evaluate_time << endl;
