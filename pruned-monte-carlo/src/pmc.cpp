@@ -14,6 +14,7 @@
 
 using namespace std;
 #define GAP 10
+#define START_SAMPLE 5
 
 UI UI_MAX = 4294967295U;
 ULL ULL_MAX = 18446744073709551615ULL;
@@ -628,7 +629,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
     double _evaluate_time = 0;
     double _find_seed_time_start = getCurrentTimeMlsec();
     int iteration_time = 0;
-    infs_size = 5;
+    infs_size = START_SAMPLE;
     while (true) {
         iteration_time++;
         infs.clear();
