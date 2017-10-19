@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
     if (tmp != NULL) {
         directed = atoi(tmp);
     }
-    cout << "-d=" << isalpha(directed) << " " << directed << endl;
+    cout << "-d=" << directed << " " << boolalpha << directed << endl;
 
     // string file = string(argv[1]);
 	// int k = atoi(argv[2]);
