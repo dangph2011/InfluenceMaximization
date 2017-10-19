@@ -6,9 +6,314 @@
 #include <algorithm>
 #include <random>
 #include "pmc.hpp"
+#include <sys/time.h>
+#include <unistd.h>
+#include "../SIEA/hypergraph.hpp"
+#include "../SIEA/xorshift.hpp"
+#include "../SIEA/sfmt/SFMT.h"
 
 using namespace std;
 #define GAP 10
+
+UI UI_MAX = 4294967295U;
+ULL ULL_MAX = 18446744073709551615ULL;
+vector<vector<int> > buffer;
+vector<vector<int> > bufferIndex;
+vector<unsigned int> beginIndex;
+vector<unsigned int> endIndex;
+vector<sfmt_t> sfmtSeed;
+unsigned int maxBufferSize = 10000;
+double b0;
+
+double getCurrentTimeMlsec(){
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec + tv.tv_usec *  1e-6;
+}
+
+double calculateInfluence(double epsilon, double delta, unsigned int numNodes, unsigned int numSeeds, int t, unsigned int rn){
+    cout << "Step 0" << endl;
+    double threshold = 1+(2+2/3)*2*log(numNodes)*(rn-numSeeds-1)*b0;
+    double threshold123 = 1+(1+epsilon)*(2+2*epsilon/3)*log(2/delta)/(epsilon*epsilon)*(rn-numSeeds-1)*b0;
+
+    long long counter = 0;
+    long long totalSampling = 0;
+    double observed = 0;
+
+    double mu0 = rn-numSeeds-1;
+
+    cout << "Step 1 " << endl;
+    double eprime = sqrt(epsilon);
+    if (eprime > 1.0/2){
+        eprime = 1.0/2;
+    }
+    threshold = 1+(1+eprime)*(2+2*eprime/3)*log(6/delta)*(mu0*b0)/epsilon;
+    cout << "threshold " << threshold << " " << (2+2*epsilon/3)*log(2/delta)*(numNodes-numSeeds-1) << " " << (epsilon*epsilon) << " " << 2*(1+sqrt(epsilon)) << " " << (1+2*sqrt(epsilon)) << " " << (1+log(3/2)/log(2/delta)) << endl;
+
+    while(observed < threshold && observed < threshold123){
+        for (int i = 0; i < t; ++i){
+            while (beginIndex[i] != endIndex[i] && observed < threshold){
+                observed += buffer[i][beginIndex[i]] + numSeeds/b0;
+                counter += 1;
+                beginIndex[i] = (beginIndex[i]+1)%maxBufferSize;
+            }
+        }
+
+    }
+
+    if (observed >= threshold123){
+                cout << "Estimated Influence: " << observed*b0/counter << endl;
+                printf("MC-1 samples: %lld\n", counter);
+                return observed*b0/counter;
+        }
+    double mu1 = observed/counter;
+
+    cout << "Mu 1: " << mu1 << endl;
+
+    cout << "Step 2" << endl;
+    double Delta = 0;
+    double threshold2 = 2*(1+sqrt(epsilon))/(1-sqrt(epsilon))*(1+log(3/2)/log(2/delta))*(2+2*epsilon/3)*log(2/delta)*(mu0*b0)/(mu1*epsilon);
+    cout << 2*(1+sqrt(epsilon))*(1+2*sqrt(epsilon))*(1+log(3/2)/log(2/delta))*(2+2*epsilon/3) << " " << log(2/delta) << " " << (mu0)/(mu1*epsilon) << endl;
+    cout << "Threshold 2: " << threshold2 << endl;
+    long long counter2 = 0;
+    int max = 0;
+    int maxind = 0;
+    int beg = 0,end = 0;
+
+    while(counter2 < threshold2 && observed < threshold123){
+                for (int i = 0; i < t; ++i){
+                        while ((beginIndex[i] + 1 < endIndex[i] || (beginIndex[i] > endIndex[i] && beginIndex[i] + 1 < endIndex[i] + maxBufferSize)) && counter2 < threshold2){
+                                Delta += (buffer[i][beginIndex[i]] - buffer[i][beginIndex[i]+1])^2/2;
+                observed += buffer[i][beginIndex[i]] + numSeeds/b0;
+                observed += buffer[i][(beginIndex[i]+1)% maxBufferSize] + numSeeds/b0;
+                                counter2 += 1;
+                                beginIndex[i] = (beginIndex[i]+2)%maxBufferSize;
+                        }
+                }
+        }
+
+    if (observed >= threshold123){
+                cout << "Estimated Influence: " << observed*b0/(counter+counter2*2) << endl;
+                printf("MC-1 samples: %lld\n", (counter+counter2*2));
+                return observed*b0/(counter+counter2*2);
+        }
+
+    cout << "Max, Maxind: " << max << " " << maxind << " " << beg << " " << end << endl;
+    totalSampling += counter2*2;
+    double rho = Delta/counter2+1;
+    if (rho < epsilon*mu1){
+        rho = epsilon*mu1;
+    }
+    cout << "Step 3 " << rho << endl;
+
+    threshold = (2+2*epsilon/3)*log(2/delta)*rho*(mu0*b0)/(epsilon*epsilon*mu1*mu1);
+    cout << "Threshold 3: " << threshold << " " << counter << endl;
+
+    while(counter < threshold && observed < threshold123){
+                for (int i = 0; i < t; ++i){
+                        while (beginIndex[i] != endIndex[i] && counter < threshold){
+                                observed += buffer[i][beginIndex[i]] + numSeeds/b0;
+                                counter += 1;
+                                beginIndex[i] = (beginIndex[i]+1)%maxBufferSize;
+                        }
+                }
+        }
+    totalSampling += counter;
+    cout << "Estimated Influence: " << observed*b0/totalSampling << endl;
+    cout << "Total Samples: " << totalSampling << endl;
+    return observed*b0/totalSampling;
+}
+
+// void runEstimate(Graph g, HyperGraph hg, vector<int> neighbors, vector<double> f1, vector<double> f2, vector<int> seeds, int t,
+//                     double epsilon, double delta, int n, int numSeeds, unsigned int rn, vector<bool> link, double b0){
+
+double runEstimate(char* inFile, char* model, int t, vector<int> seeds, double epsilon){
+    //srand(time(NULL));
+    // OptionParser op(argc, argv);
+    // if (!op.validCheck()){
+    //     printf("Parameters error, please check the readme.txt file for correct format!\n");
+    //     return -1;
+    // }
+
+    // char * interFile = op.getPara("-s");
+    // if (interFile == NULL){
+    //     interFile = (char*) "network.seeds";
+    // }
+    cout << "TEST=" << " " << inFile << " " << model << " " << t << " " << epsilon << endl;
+    //vector<int> seeds;
+
+    // for (int i = 1; i <= 1000; i++) {
+    //     seeds.push_back(i);
+    // }
+
+    // ifstream in(interFile);
+    //     int intTmp;
+    //     in >> intTmp;
+    //     while (!in.eof()){
+    //             seeds.push_back(intTmp);
+    //             in >> intTmp;
+    //     }
+    //     in.close();
+    // for (int se:seeds) {
+    //     cout << "SEED=" << se << endl;
+    // }
+    unsigned int numSeeds = seeds.size();
+    cout << "Seeds done" << endl;
+
+    vector<int> neighbors;
+    vector<double> f1,f2;
+
+    // char * inFile = op.getPara("-i");
+    // if (inFile == NULL){
+    //     inFile = (char*)"network.bin";
+    // }
+
+    // char * model = op.getPara("-m");
+    // if (model == NULL)
+    //     model = (char *) "IC";
+
+    float scale = 1;
+    // char * scaledown = op.getPara("-sd");
+    // if (scaledown != NULL){
+    //     scale = atof(scaledown);
+    // }
+
+    Graph g;
+    if (strcmp(model, "LT") == 0){
+        g.readGraphLT(inFile,scale);
+    } else if (strcmp(model, "IC") == 0){
+        g.readGraphIC(inFile,seeds,neighbors,f1,f2);
+    } else {
+        printf("Incorrect model option!");
+        //return -1;
+    }
+    b0 = f1[f1.size()-1];
+    cout << "Compute b0 " << f1[f1.size()-1] << " " << endl;
+
+    if (b0 <= 0){
+                cout << "Estimated Influence: " << numSeeds << endl;
+                printf("MC-1 samples: %d\n", 1);
+                cout << "Time: " << 0 << endl;
+                //cout << "Memory: " << getMemValue()/1024.0 << endl;
+                //return 1;
+        }
+
+    int n = g.getSize();
+    int m = g.getEdge();
+
+    //char * tmp = op.getPara("-epsilon");
+    //double epsilon = 0.005;
+    // if (tmp != NULL){
+    //     epsilon = atof(tmp);
+    // }
+
+    double delta = 1.0/n;
+
+    // tmp = op.getPara("-delta");
+    // if (tmp != NULL){
+    //     delta = atof(tmp);
+    // }
+
+    // int t = 2;
+    // tmp = op.getPara("-t");
+    // if (tmp != NULL){
+    //     t = atoi(tmp);
+    // }
+
+    vector<bool> link(n+1, false);
+    for (unsigned int i = 0; i < seeds.size(); ++i){
+        link[seeds[i]] = true;
+    }
+
+    HyperGraph hg(n,m);
+    unsigned int rn = hg.reachableNodes(seeds,n,g);
+
+    // char * outFile = op.getPara("-o");
+    // if (outFile == NULL){
+    //     outFile = (char *)"output.txt";
+    // }
+
+    //calculateInfluence(epsilon,delta,n,numSeeds,t,rn);
+    //hg.pollingIC(g,neighbors,f1,f2,visit,visit_mark,num_marked,sfmtSeed[id],seeds,firstphasetime);
+    //runEstimate(g, hg, neighbors, f1, f2, seeds, t, epsilon, delta, n, numSeeds, rn, link);
+    sfmtSeed = vector<sfmt_t>(t+1);
+        for (int i = 0; i <= t; ++i){
+                sfmt_init_gen_rand(&sfmtSeed[i], rand());
+        }
+
+    buffer = vector<vector<int> >(t);
+    bufferIndex = vector<vector<int> >(t);
+    for (int i = 0; i < t; ++i){
+        buffer[i] = vector<int>(maxBufferSize);
+        bufferIndex[i] = vector<int>(maxBufferSize);
+    }
+    beginIndex = vector<unsigned int>(t,0);
+    endIndex = vector<unsigned int>(t,0);
+    vector<int> maxSeed(t);
+
+    timespec start,stop,start1,stop1;
+
+    clock_gettime(CLOCK_REALTIME, &start);
+/*  addHyperedge(g,hg,1,totalSamples,1,seeds,prob);
+ *  clock_gettime(CLOCK_REALTIME, &stop);
+ */
+    double firstphasetime = 0;
+    double timeforpolling = 0;
+
+    bool terminated = false;
+    double estimate_influence = 0;
+    omp_set_num_threads(t);
+        #pragma omp parallel shared(terminated)
+        {
+
+            int id = omp_get_thread_num();
+            //cout << "Thread: " << id << endl;
+        if (id > 0){
+            //sleep(5);
+            vector<bool> visit = link;
+                    vector<int> visit_mark(n,0);
+                    unsigned int num_marked = 0;
+            unsigned int count = 0;
+
+            while (!terminated){
+//              cout << "Generate samples" << endl;
+                clock_gettime(CLOCK_REALTIME, &start1);
+                    hg.pollingIC(g,neighbors,f1,f2,visit,visit_mark,num_marked,sfmtSeed[id],seeds,firstphasetime);
+                clock_gettime(CLOCK_REALTIME, &stop1);
+                timeforpolling += ((stop1.tv_sec - start1.tv_sec) + (stop1.tv_nsec - start1.tv_nsec)/exp(9*log(10)));
+//              cout << "Generate samples" << endl;
+                count++;
+                while (!terminated){
+                    if ((endIndex[id]+1)%maxBufferSize != beginIndex[id]){
+                        #pragma omp critical
+                        {
+                            buffer[id][endIndex[id]] = num_marked;
+                            //cout << "buffer[id]=" << id << " endIndex[id]=" << endIndex[id] << " buffer[id][endIndex[id]]=" << buffer[id][endIndex[id]] << " beginIndex[id]=" << beginIndex[id] << endl;
+//                          cout << "One sample: " << num_marked << " " << numSeeds << " " << b0 << endl;
+                            bufferIndex[id][endIndex[id]] = count;
+                            endIndex[id] = (endIndex[id]+1)%maxBufferSize;
+                            count = 0;
+                        }
+                        break;
+                    }
+                    #pragma omp flush(terminated)
+                }
+            }
+            //cout << "Thread " << id << " terminated " << endl;
+        } else {
+            estimate_influence = calculateInfluence(epsilon,delta,n,numSeeds,t,rn);
+            cout << "terminated" << endl;
+            terminated = true;
+            #pragma omp flush(terminated)
+        }
+    }
+
+    clock_gettime(CLOCK_REALTIME, &stop);
+    cout << "Time for first step: " << firstphasetime << endl;
+    cout << "Time for polling: " << timeforpolling << endl;
+    cout << "Time: " << ((stop.tv_sec - start.tv_sec) + (stop.tv_nsec - start.tv_nsec)/exp(9*log(10))) << endl;
+    return estimate_influence;
+}
 
 inline int PrunedEstimater::unique_child(const int v) {
 	int outdeg = 0, child = -1;
@@ -289,7 +594,7 @@ void PrunedEstimater::add(int v0) {
 }
 
 vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
-		const int k, const int R, double epsilon){
+		const int k, const int R, double epsilon, char * inFile, char * model, int t) {
 	n = 0;
 	m = es.size();
 	for (int i = 0; i < (int) es.size(); i++) {
@@ -315,27 +620,34 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
     std::uniform_real_distribution<> dis(0, 1);
 
     double avr_rc1 = 0;
-    //double avr_rc2 = 0;
-    double avr_rc_std = 0;
+    double avr_rc2 = 0;
+    //double avr_rc_std = 0;
     Evaluater ev;
     ev.init(es);
     long long seed_reachability = 0;
-    while (!avr_rc_std) {
-        seeds.clear();
-        seed_reachability = 0;
+    double _evaluate_time = 0;
+    double _find_seed_time_start = getCurrentTimeMlsec();
+    int iteration_time = 0;
+    while (true) {
+        iteration_time++;
+        infs.clear();
         infs_size = infs_size + 10;
+        //gain.assign(n,0);
+        //next = 0;
+        seeds.clear();
+        //reuse sample
+        seed_reachability = 0;
         infs.resize(infs_size);
         //generate double sample size
-    	for (int t = infs_size-10; t < infs_size; t++) {
-    		Xorshift xs = Xorshift(t);
-
+    	for (int t = 0; t < infs_size; t++) {
+    		//Xorshift xs = Xorshift(t);
     		int mp = 0;
     		at_e.assign(n + 1, 0);
     		at_r.assign(n + 1, 0);
     		vector<pair<int, int> > ps;
     		for (int i = 0; i < m; i++) {
-    			if (xs.gen_double() < es[i].second) {
-                //if (dis(gen) < es[i].second) {
+    			//if (xs.gen_double() < es[i].second) {
+                if (dis(gen) < es[i].second) {
     				es1[mp++] = es[i].first.second;
     				at_e[es[i].first.first + 1]++;
     				ps.push_back(make_pair(es[i].first.second, es[i].first.first));
@@ -377,7 +689,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
             infs[t].first();
         }
 
-    	vector<long long> gain(n);
+    	vector<long long> gain(n,0);
     	//vector<int> S;
 
     	for (int t = 0; t < k; t++) {
@@ -399,13 +711,32 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
     	}
         cout << "\t\t\t\tReachability=" << seed_reachability << endl;
         cout << "\t\t\t\tNumber of sample = " << infs_size << endl;
-        avr_rc1 = seed_reachability / infs_size;
-        //double start_evaluate = getCurrentTimeMlsec();
-        avr_rc_std = ev.evaluate(seeds, es, epsilon, avr_rc1);
+        avr_rc1 = (double)seed_reachability / infs_size;
+        double _evaluate_time_start = getCurrentTimeMlsec();
+        //avr_rc_std = ev.evaluate(seeds, es, epsilon, avr_rc1);
+        avr_rc2 = runEstimate(inFile, model, t, seeds, epsilon);
         cout << "\t\t\t\tAverage rc 1 = " << avr_rc1 << endl;
-        cout << "\t\t\t\tAverage reachability standardize=" << avr_rc_std << endl;
+        //avr_rc2 = double(estimate_influence) / n;
+        cout << "\t\t\t\tAverage rc 2 = " << avr_rc2 << endl;
+        _evaluate_time += getCurrentTimeMlsec() - _evaluate_time_start;
+        if (avr_rc1/avr_rc2 - 1 < epsilon/2) {
+            cout << "\t\t\t\tAverage reachability standardize=" << avr_rc2/n << endl;
+            break;
+        }
+
+        //cout << "\t\t\t\tAverage reachability standardize=" << avr_rc_std << endl;
         //std::cout << "\t\tTime evaluate=" << getCurrentTimeMlsec() - start_evaluate << "\n";
     }
+    cout << "Iteration Time=" << iteration_time << endl;
+    cout << "\t\tEvaluate Time=" << _evaluate_time << endl;
+    cout << "\t\tFind Seed Time=" << getCurrentTimeMlsec() - _find_seed_time_start - _evaluate_time << endl;
+
+    cout << getCurrentTimeMlsec() - _find_seed_time_start - _evaluate_time << endl;
+    cout << infs_size << endl;
+    cout << _evaluate_time << endl;
+    cout << avr_rc2/n << endl;
+    cout << iteration_time << endl;
+
 	return seeds;
 }
 
@@ -513,9 +844,9 @@ bool Evaluater::evaluate(vector<int> seeds, vector<pair<pair<int, int>, double> 
 
     //while (seed_reachability < bs && nu_sample < max_sample) {
     while (seed_reachability < bs) {
-        double time_assign_start = getCurrentTimeMlsec();
+        //double time_assign_start = getCurrentTimeMlsec();
         removed.assign(n,false);
-        time_assign += getCurrentTimeMlsec() - time_assign_start;
+        //time_assign += getCurrentTimeMlsec() - time_assign_start;
         for (int se : seeds) {
             if (removed[se]) {
                 continue;

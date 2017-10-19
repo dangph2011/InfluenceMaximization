@@ -1,4 +1,4 @@
-    #include <vector>
+#include <vector>
 using namespace std;
 
 //struct Node (Vertex)
@@ -61,8 +61,15 @@ private:
 
 	int scc(vector<int> &comp);
 public:
-	vector<int> run(vector<pair<pair<int, int>, double> > &es, const int k,
-			const int R, double ep);
+	// vector<int> run(vector<pair<pair<int, int>, double> > &es, const int k,
+	//  		const int R, double ep);
+    vector<int> run(vector<pair<pair<int, int>, double> > &es, const int k,
+            const int R, double epsilon, char * inFile, char * model, int t);
+    // vector<int> run(vector<pair<pair<int, int>, double> > &es, int k, int R, double epsilon,
+    //             Graph g, HyperGraph hg, vector<int> neighbors,
+    //                 vector<double> f1, vector<double> f2, vector<int> seeds, int t,
+    //                     double delta, int n, int numSeeds, unsigned int rn,
+    //                             vector<bool> link, double b0);
 };
 
 class Evaluater{
