@@ -40,11 +40,12 @@ int main(int argc, char **argv) {
     if (inFile == NULL){
         inFile = (char*)"network.bin";
     }
+    cout << "-i=" << inFile << endl;
 
     char * model = op.getPara("-m");
     if (model == NULL)
         model = (char *) "IC";
-
+    cout << "-m=" << model << endl;
     // float scale = 1;
     // char * scaledown = op.getPara("-sd");
     // if (scaledown != NULL){
@@ -56,7 +57,7 @@ int main(int argc, char **argv) {
     if (tmp != NULL){
         epsilon = atof(tmp);
     }
-
+    cout << "-epsilon=" << epsilon << endl;
     // double delta = 1.0/n;
     // tmp = op.getPara("-delta");
     // if (tmp != NULL){
@@ -68,30 +69,43 @@ int main(int argc, char **argv) {
     if (tmp != NULL){
         t = atoi(tmp);
     }
+    cout << "-t=" << t << endl;
 
 	string file = "network.txt";
     tmp = op.getPara("-f");
     if (tmp != NULL){
         file = string(tmp);
     }
+    cout << "-f=" << file << endl;
 
     int k = 10;
     tmp = op.getPara("-k");
     if (tmp != NULL){
         k = atoi(tmp);
     }
+    cout << "-k=" << k << endl;
 
     int R = 200;
     tmp = op.getPara("-r");
     if (tmp != NULL){
         R = atoi(tmp);
     }
+    cout << "-r=" << R << endl;
 
     double p = 0.01;
     tmp = op.getPara("-p");
     if (tmp != NULL){
         p = atof(tmp);
     }
+    cout << "-p=" << p << endl;
+
+    bool directed = true;
+    tmp = op.getPara("-d");
+    if (tmp != NULL) {
+        directed = atoi(tmp);
+    }
+    cout << "-d=" << isalpha(directed) << " " << directed << endl;
+
     // string file = string(argv[1]);
 	// int k = atoi(argv[2]);
 	// int R = atoi(argv[3]);
@@ -108,6 +122,9 @@ int main(int argc, char **argv) {
 			continue;
 		}
 		es.push_back(make_pair(make_pair(u, v), p));
+        if (!directed) {
+            es.push_back(make_pair(make_pair(v, u), p));
+        }
 	}
 	is.close();
 
