@@ -767,11 +767,11 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
         //cout << "\t\t\t\tAverage reachability standardize=" << avr_rc2/n << endl;
     }
 
-    cout << "\t\t\t\Find Seed Time: " << getCurrentTimeMlsec() - _find_seed_time_start - _evaluate_time << endl;
-    cout << "\t\t\t\Evaluated Time: " << _evaluate_time << endl;
-    cout << "\t\t\t\Number of Samples: " << R << endl;
-    cout << "\t\t\t\Iteration Time: " << iteration_time << endl;
-    cout << "\t\t\t\tAverage reachability standardize: " << avr_rc2/n << endl;
+    cout << "\t\t\tFind Seed Time: " << getCurrentTimeMlsec() - _find_seed_time_start - _evaluate_time << endl;
+    cout << "\t\t\tEvaluated Time: " << _evaluate_time << endl;
+    cout << "\t\t\tNumber of Samples: " << R << endl;
+    cout << "\t\t\tIteration Time: " << iteration_time << endl;
+    cout << "\t\t\tAverage reachability standardize: " << avr_rc2/n << endl;
 
 	cout << "Time find seed only=" << getCurrentTimeMlsec() - start_seed << endl;
 
