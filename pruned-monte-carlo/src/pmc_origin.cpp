@@ -750,28 +750,29 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
 		}
 		seeds.push_back(next);
 	}
-    double _evaluate_time_start = getCurrentTimeMlsec();
+
     //avr_rc_std = ev.evaluate(seeds, es, epsilon, avr_rc1);
     avr_rc1 = (double)seed_reachability / R;
-    avr_rc2 = runEstimate(inFile, model, t, seeds, epsilon);
+    //avr_rc2 = runEstimate(inFile, model, t, seeds, epsilon);
     cout << "\t\t\t\tAverage rc 1 = " << avr_rc1 << endl;
-    cout << "\t\t\t\tAverage rc 2 = " << avr_rc2 << endl;
+    //cout << "\t\t\t\tAverage rc 2 = " << avr_rc2 << endl;
+    double _evaluate_time_start = getCurrentTimeMlsec();
     _evaluate_time += getCurrentTimeMlsec() - _evaluate_time_start;
 
-    if (avr_rc1/avr_rc2 - 1 < epsilon/2) {
-        cout << "Result: TRUE";
-        //cout << "\t\t\t\tAverage reachability standardize=" << avr_rc2/n << endl;
-        //break;
-    } else {
-        cout << "Result: FALSE";
-        //cout << "\t\t\t\tAverage reachability standardize=" << avr_rc2/n << endl;
-    }
+    // if (avr_rc1/avr_rc2 - 1 < epsilon/2) {
+    //     cout << "Result: TRUE";
+    //     //cout << "\t\t\t\tAverage reachability standardize=" << avr_rc2/n << endl;
+    //     //break;
+    // } else {
+    //     cout << "Result: FALSE";
+    //     //cout << "\t\t\t\tAverage reachability standardize=" << avr_rc2/n << endl;
+    // }
 
     cout << "\t\t\tFind Seed Time: " << getCurrentTimeMlsec() - _find_seed_time_start - _evaluate_time << endl;
     cout << "\t\t\tEvaluated Time: " << _evaluate_time << endl;
     cout << "\t\t\tNumber of Samples: " << R << endl;
     cout << "\t\t\tIteration Time: " << iteration_time << endl;
-    cout << "\t\t\tAverage reachability standardize: " << avr_rc2/n << endl;
+    cout << "\t\t\tAverage reachability standardize: " << avr_rc1/n << endl;
 
 	cout << "Time find seed only=" << getCurrentTimeMlsec() - start_seed << endl;
 
@@ -779,7 +780,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
     cout << _evaluate_time << endl;
     cout << R << endl;
     cout << iteration_time << endl;
-    cout << avr_rc2/n << endl;
+    cout << avr_rc1/n << endl;
 
 	return seeds;
 }

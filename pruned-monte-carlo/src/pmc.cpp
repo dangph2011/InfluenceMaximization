@@ -721,7 +721,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
         cout << "\t\t\t\tAverage rc 2 = " << avr_rc2 << endl;
         _evaluate_time += getCurrentTimeMlsec() - _evaluate_time_start;
         if (avr_rc1/avr_rc2 - 1 < epsilon/2) {
-            cout << "\t\t\t\tAverage reachability standardize=" << avr_rc2/n << endl;
+            //cout << "\t\t\t\tAverage reachability standardize=" << avr_rc2/n << endl;
             break;
         }
 
