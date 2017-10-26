@@ -671,6 +671,7 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
     long long seed_reachability = 0;
     double _evaluate_time = 0;
     double _find_seed_time_start = getCurrentTimeMlsec();
+    int iteration_time = 1;
 	for (int t = 0; t < R; t++) {
 		Xorshift xs = Xorshift(t);
 
@@ -758,23 +759,27 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
     _evaluate_time += getCurrentTimeMlsec() - _evaluate_time_start;
 
     if (avr_rc1/avr_rc2 - 1 < epsilon/2) {
-        cout << "-----TRUE-----";
-        cout << "\t\t\t\tAverage reachability standardize=" << avr_rc2/n << endl;
+        cout << "Result: TRUE";
+        //cout << "\t\t\t\tAverage reachability standardize=" << avr_rc2/n << endl;
         //break;
     } else {
-        cout << "-----FALSE-----";
-        cout << "\t\t\t\tAverage reachability standardize=" << avr_rc2/n << endl;
+        cout << "Result: FALSE";
+        //cout << "\t\t\t\tAverage reachability standardize=" << avr_rc2/n << endl;
     }
 
-    cout << "\t\tEvaluate Time=" << _evaluate_time << endl;
-    cout<< "\t\tFind Seed Time=" << getCurrentTimeMlsec() - _find_seed_time_start - _evaluate_time << endl;
+    cout << "\t\t\t\Find Seed Time: " << getCurrentTimeMlsec() - _find_seed_time_start - _evaluate_time << endl;
+    cout << "\t\t\t\Evaluated Time: " << _evaluate_time << endl;
+    cout << "\t\t\t\Number of Samples: " << R << endl;
+    cout << "\t\t\t\Iteration Time: " << iteration_time << endl;
+    cout << "\t\t\t\tAverage reachability standardize: " << avr_rc2/n << endl;
+
 	cout << "Time find seed only=" << getCurrentTimeMlsec() - start_seed << endl;
 
     cout << getCurrentTimeMlsec() - _find_seed_time_start - _evaluate_time << endl;
-    cout << R << endl;
     cout << _evaluate_time << endl;
+    cout << R << endl;
+    cout << iteration_time << endl;
     cout << avr_rc2/n << endl;
-    //cout << iteration_time << endl;
 
 	return seeds;
 }

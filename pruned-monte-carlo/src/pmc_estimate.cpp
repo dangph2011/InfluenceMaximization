@@ -1002,20 +1002,23 @@ vector<int> InfluenceMaximizer::run(vector<pair<pair<int, int>, double> > &es,
         //avr_rc2 = double(estimate_influence) / n;
         cout << "\t\t\t\tAverage rc 2 = " << avr_rc2 << endl;
         if (avr_rc1/avr_rc2 - 1 < epsilon/2) {
-            cout << "\t\t\t\tAverage reachability standardize=" << avr_rc2/n << endl;
+            //cout << "\t\t\t\tAverage reachability standardize=" << avr_rc2/n << endl;
             break;
         }
         z = z*2;
     }
-    cout << "Iteration Time=" << iteration_time << endl;
-    cout << "\t\tEvaluate Time=" << _evaluate_time << endl;
-    cout << "\t\tFind Seed Time=" << getCurrentTimeMlsec() - _find_seed_time_start - _evaluate_time << endl;
+    cout << "\t\t\t\Find Seed Time: " << getCurrentTimeMlsec() - _find_seed_time_start - _evaluate_time << endl;
+    cout << "\t\t\t\Evaluated Time: " << _evaluate_time << endl;
+    cout << "\t\t\t\Number of Samples: " << infs_size << endl;
+    cout << "\t\t\t\Iteration Time: " << iteration_time << endl;
+    cout << "\t\t\t\tAverage reachability standardize: " << avr_rc2/n << endl;
 
     cout << getCurrentTimeMlsec() - _find_seed_time_start - _evaluate_time << endl;
-    cout << infs_size << endl;
     cout << _evaluate_time << endl;
-    cout << avr_rc2/n << endl;
+    cout << infs_size << endl;
     cout << iteration_time << endl;
+    cout << avr_rc2/n << endl;
+
 	return seeds;
 }
 
